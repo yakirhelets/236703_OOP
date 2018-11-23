@@ -82,7 +82,7 @@ public class ProfesorImpl implements Profesor {
     @Override
     public Collection<CasaDeBurrito> favoritesByRating(int rLimit) {
         return filterAndSortFavorites(
-                (casa1, casa2) -> (int) (casa1.averageRating() - casa2.averageRating()),
+                Comparator.comparingDouble(CasaDeBurrito::averageRating).reversed(),
                 casa -> casa.averageRating() >= rLimit
         );
     }
@@ -90,8 +90,8 @@ public class ProfesorImpl implements Profesor {
     @Override
     public Collection<CasaDeBurrito> favoritesByDist(int dLimit) {
         return filterAndSortFavorites(
-                (casa1, casa2) -> (int) (casa1.distance() - casa2.distance()),
-                casa -> casa.distance() >= dLimit
+                Comparator.comparingInt(CasaDeBurrito::distance),
+                casa -> casa.distance() <= dLimit
         );
     }
 
