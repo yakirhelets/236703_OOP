@@ -14,16 +14,13 @@ public class CasaDeBurritoImpl implements CasaDeBurrito {
     private int distance;
     private Set<String> menu;
     private Map<Integer, Integer> rates; //added new set here! (profesorID,profesorRate)
-    private int numOfRates;
-    private int sumOfRates;
+
 
     //constructor
     public CasaDeBurritoImpl(int id, String name, int dist, Set<String> menu){
         this.id = id;
         this.name = name;
         this.distance = dist;
-        numOfRates =0;
-        sumOfRates=0;
         this.menu = new HashSet<>();
         this.rates = new HashMap<>();
         this.menu.addAll(menu);
@@ -64,14 +61,19 @@ public class CasaDeBurritoImpl implements CasaDeBurrito {
 
     @Override
     public int numberOfRates(){
-        return numOfRates;
+        return this.rates.size();
     }
 
     @Override
     public double averageRating(){
+        int numOfRates = this.rates.size();
+        int sumOfRates=0;
         if(numOfRates == 0){
             return 0;
         }else{
+            for (Map.Entry<Integer,Integer> entry : this.rates.entrySet()){
+                sumOfRates+= entry.getValue(); //sum of all values
+            }
             return (double)sumOfRates / numOfRates; //return avg
         }
     }

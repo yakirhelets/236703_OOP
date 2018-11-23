@@ -35,7 +35,8 @@ public class CartelDeNachosImpl implements CartelDeNachos {
             throw new CasaDeBurrito.CasaDeBurritoAlreadyInSystemException();
         }
         rests.add(c);
-        return c;    }
+        return c;    
+    }
 
     @Override
     public Collection<Profesor> registeredProfesores() {
