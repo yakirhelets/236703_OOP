@@ -84,6 +84,9 @@ public class Example {
         Iterator<CasaDeBurrito> s1RateIterator = s1.favoritesByRating(1).iterator();
         Iterator<CasaDeBurrito> s2DistIterator = s2.favoritesByDist(20).iterator();
 
+        System.out.println(network.toString());
+
+
         assertEquals(s1RateIterator.next(), r1);
         assertEquals(s1RateIterator.next(), r2);
         assertEquals(s2DistIterator.next(), r3);
