@@ -1,9 +1,13 @@
 package OOP.Provided;
 
-import java.util.Collection;
-import OOP.Provided.Profesor.*;
-import OOP.Provided.CasaDeBurrito.*;
+import OOP.Provided.CasaDeBurrito.CasaDeBurritoAlreadyInSystemException;
+import OOP.Provided.CasaDeBurrito.CasaDeBurritoNotInSystemException;
+import OOP.Provided.Profesor.ConnectionAlreadyExistsException;
+import OOP.Provided.Profesor.ProfesorAlreadyInSystemException;
+import OOP.Provided.Profesor.ProfesorNotInSystemException;
+import OOP.Provided.Profesor.SameProfesorException;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -119,7 +123,7 @@ public interface CartelDeNachos {
      * End profesores.
      * </format>
      * Note: profesores, casas de burrito and friends' ids are ordered by natural integer order, asc.*
-     * Example:
+     * Tests.Example:
      *
      * Registered profesores: 1, 236703, 555555.
      * Registered casas de burrito: 12, 13.

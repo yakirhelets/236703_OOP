@@ -1,3 +1,5 @@
+package IntegrationTests;
+
 import OOP.Provided.CasaDeBurrito;
 import OOP.Provided.CartelDeNachos;
 import OOP.Provided.CartelDeNachos.ImpossibleConnectionException;
@@ -9,25 +11,11 @@ import org.junit.Test;
 
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
-import static java.util.Arrays.asList;
-import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.*;
 
 
 public class Example {
-
-    @Test
-    public void SortUsingComparator() {
-
-        // Descending Order "סדר יורד"
-        assertEquals(Stream.of(5, 3, 4, 1).sorted(Comparator.reverseOrder()).collect(toList()),asList(5,4,3,1));
-
-        // Ascending Order "סדר עולה"
-        assertEquals(Stream.of(5, 3, 4, 1).sorted().collect(toList()),asList(1,3,4,5));
-    }
-
     @Test
     public void ExampleTest() {
         CartelDeNachos network = new CartelDeNachosImpl();

@@ -60,7 +60,7 @@ public interface CasaDeBurrito extends Comparable<CasaDeBurrito> {
      * </format>
      * Note: Menu items are ordered by lexicographical order, asc.
      *
-     * Example:
+     * Tests.Example:
      *
      * OOP.Provided.CasaDeBurrito: BBB.
      * Id: 1.

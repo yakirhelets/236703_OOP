@@ -84,7 +84,7 @@ public interface Profesor extends Comparable<Profesor> {
      * </format>
      * Note: favorite casas de burrito are ordered by lexicographical order, asc.
      *
-     * Example:
+     * Tests.Example:
      *
      * OOP.Provided.Profesor: Oren.
      * Id: 236703.
