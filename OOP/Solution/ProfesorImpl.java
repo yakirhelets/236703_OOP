@@ -4,6 +4,7 @@ import OOP.Provided.Profesor;
 import OOP.Provided.CasaDeBurrito;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class ProfesorImpl implements Profesor {
     private int id;
@@ -26,17 +27,20 @@ public class ProfesorImpl implements Profesor {
 
     @Override
     public Profesor favorite(CasaDeBurrito c) throws UnratedFavoriteCasaDeBurritoException {
-        if (favorites.contains(c)) {
+        if (!c.isRatedBy(this)) { //profesor didn't rate this rest yet!
             throw new UnratedFavoriteCasaDeBurritoException();
         } else {
-            favorites.add(c);
+            favorites.add(c); //TODO:in favoriteTest - they are comparing two different rest objects with the same id
+            //we are not passing it because we count them as different objects and not by their Id's..
+            //--will need to change the implemnt(Set of Id's maybe..) or check if its currect to test this case.
         }
         return this;
     }
 
     @Override
     public Collection<CasaDeBurrito> favorites() {
-        return favorites;
+        Collection<CasaDeBurrito> copy = favorites.stream().collect(Collectors.toSet());
+        return copy; //returns a copy of favorites so future actions won't change out original one
     }
 
     @Override
@@ -54,7 +58,8 @@ public class ProfesorImpl implements Profesor {
 
     @Override
     public Set<Profesor> getFriends() {
-        return friends;
+        Set<Profesor> copy = friends.stream().collect(Collectors.toSet());
+        return copy; //returns a copy of friends so future actions won't change out original one
     }
 
     @Override

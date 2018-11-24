@@ -43,6 +43,9 @@ public class CasaDeBurritoImpl implements CasaDeBurrito {
 
     @Override
     public boolean isRatedBy(Profesor p){
+        if(p == null){
+            return false;
+        }
         return rates.containsKey(p.getId());
     }
 
@@ -87,6 +90,16 @@ public class CasaDeBurritoImpl implements CasaDeBurrito {
                 "Distance" +
                 distance() + "./n" +
                 menu.stream().sorted().reduce("", (m1,m2) -> m1 +", " + m2) + "./n";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof CasaDeBurrito)) {
+            return false;
+        } else {
+            return ((CasaDeBurrito) this).getId() == ((CasaDeBurrito) o).getId();
+        }
+
     }
 
     @Override

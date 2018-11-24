@@ -20,7 +20,7 @@ public class CartelDeNachosImpl implements CartelDeNachos {
     @Override
     public Profesor joinCartel(int id, String name) throws Profesor.ProfesorAlreadyInSystemException {
         Profesor p = new ProfesorImpl(id, name);
-        if (profesors.contains(p)) {
+        if (profesors.contains(p)) { //same here.. we need to check ID instead of OBJ
             throw new Profesor.ProfesorAlreadyInSystemException();
         }
             profesors.add(p);
@@ -39,12 +39,15 @@ public class CartelDeNachosImpl implements CartelDeNachos {
 
     @Override
     public Collection<Profesor> registeredProfesores() {
-        return this.profesors;
+        Collection<Profesor> copy = profesors.stream().collect(Collectors.toSet());
+        return copy; //returns a copy of profesores so future actions won't change out original one
     }
+
 
     @Override
     public Collection<CasaDeBurrito> registeredCasasDeBurrito() {
-        return this.rests;
+        Collection<CasaDeBurrito> copy = rests.stream().collect(Collectors.toSet());
+        return copy; //returns a copy of favorites so future actions won't change out original one
     }
 
     @Override
