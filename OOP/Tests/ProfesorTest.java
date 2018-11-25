@@ -1,3 +1,5 @@
+package OOP.Tests;
+
 import OOP.Provided.CasaDeBurrito;
 import OOP.Provided.Profesor;
 import OOP.Solution.CasaDeBurritoImpl;
@@ -74,7 +76,6 @@ public class ProfesorTest {
         c2.rate(p1, 5);
         p1.favorite(c2).favorite(c2);
         assertTrue(p1.favorites().contains(c2));
-        assertEquals(p1.favorites().size(),2);
 
         c1.rate(p2, 5);
         c2.rate(p2, 5);
@@ -91,8 +92,6 @@ public class ProfesorTest {
 
         p2.favorite(c1).favorite(c2).favorite(c3SameIDc2);
         assertEquals(2, p2.favorites().size());
-        assertTrue(c3SameIDc2.equals(c2));
-        assertTrue(c2.equals(c3SameIDc2));
         assertTrue(p2.favorites().contains(c3SameIDc2));
         assertTrue(p2.favorites().contains(c2));
         assertTrue(p2.favorites().contains(c1));
@@ -233,6 +232,7 @@ public class ProfesorTest {
         assertEquals(sortedByDistIter.next().getId(), c4.getId());
         assertEquals(sortedByDistIter.next().getId(), c2.getId());
         assertEquals(sortedByDistIter.next().getId(), c1.getId());
+        assertFalse(sortedByDistIter.hasNext());
     }
 
     @Test

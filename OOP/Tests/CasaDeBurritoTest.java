@@ -1,3 +1,5 @@
+package OOP.Tests;
+
 import OOP.Provided.CasaDeBurrito;
 import OOP.Provided.Profesor;
 import OOP.Solution.CasaDeBurritoImpl;

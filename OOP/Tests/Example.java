@@ -1,3 +1,5 @@
+package OOP.Tests;
+
 import OOP.Provided.CasaDeBurrito;
 import OOP.Provided.CartelDeNachos;
 import OOP.Provided.CartelDeNachos.ImpossibleConnectionException;
@@ -50,7 +52,7 @@ public class Example {
             r1 = network.addCasaDeBurrito(10, "BBB", 12, menu1);
             r2 = network.addCasaDeBurrito(12, "Bob's place", 5, menu2);
             r3 = network.addCasaDeBurrito(14, "Ben's hut", 1, menu1);
-        } catch (CasaDeBurritoAlreadyInSystemException e) {
+        } catch (CasaDeBurrito.CasaDeBurritoAlreadyInSystemException e) {
             fail();
         }
 
@@ -89,7 +91,7 @@ public class Example {
             Collection<CasaDeBurrito> s2Favorites = s2.favorites();
             assertTrue(s2Favorites.stream().noneMatch(p1) && s2Favorites.stream().anyMatch(p2));
 
-        } catch (CasaDeBurritoNotInSystemException e) {
+        } catch (CasaDeBurrito.CasaDeBurritoNotInSystemException e) {
             fail();
         }
 

@@ -1,3 +1,5 @@
+package OOP.Tests;
+
 import OOP.Provided.CartelDeNachos;
 import OOP.Provided.CasaDeBurrito;
 import OOP.Provided.Profesor;
@@ -15,7 +17,7 @@ import java.util.Iterator;
 import static java.util.Collections.emptySet;
 import static org.junit.Assert.*;
 
-
+@SuppressWarnings("Duplicates")
 public class CartelDeNachosTest {
     private class PojoClass {
         String name = "1";
@@ -235,13 +237,36 @@ public class CartelDeNachosTest {
         favoritesByRatingIter = sys.favoritesByRating(p1).iterator();
 
         // expected:
-        // CasaDeBurritoImpl{id=22, name='c2', dist=22, menu=[], rates={2=2}}
-        // CasaDeBurritoImpl{id=11, name='c1', dist=11, menu=[], rates={2=1, 3=4}}
-        // CasaDeBurritoImpl{id=33, name='c3', dist=33, menu=[], rates={3=3}}
+        // CasaDeBurritoImpl{id=11, name='c1', dist=11, menu=[], rates={2=1, 3=4}} => rank 2.5
+        // CasaDeBurritoImpl{id=22, name='c2', dist=22, menu=[], rates={2=2}} => rank 2
+        // CasaDeBurritoImpl{id=33, name='c3', dist=33, menu=[], rates={3=3}} => rank 3
 
-        assertEquals(22, favoritesByRatingIter.next().getId()); //TODO fix here! we get: c1->c2->c3
+        // Unique ranks
         assertEquals(11, favoritesByRatingIter.next().getId());
+        assertEquals(22, favoritesByRatingIter.next().getId());
         assertEquals(33, favoritesByRatingIter.next().getId());
+        assertFalse(favoritesByRatingIter.hasNext());
+
+        // c3,c4 same ranks - expected to be sorted by ASCENDING Distance.
+        p4 = sys.joinCartel(4,"p4");
+        c4 = sys.addCasaDeBurrito(44, "c4", 44, emptySet());
+        c4.rate(p4,3);
+        p4.favorite(c4);
+
+        sys.addConnection(p1,p4);
+
+        favoritesByRatingIter = sys.favoritesByRating(p1).iterator();
+
+        // expected:
+        // CasaDeBurritoImpl{id=11, name='c1', dist=11, menu=[], rates={2=1, 3=4}} => rank 2.5
+        // CasaDeBurritoImpl{id=22, name='c2', dist=22, menu=[], rates={2=2}} => rank 2
+        // CasaDeBurritoImpl{id=33, name='c3', dist=33, menu=[], rates={3=3}} => rank 3
+        // CasaDeBurritoImpl{id=44, name='c4', dist=44, menu=[], rates={3=3}} => rank 3
+
+        assertEquals(11, favoritesByRatingIter.next().getId());
+        assertEquals(22, favoritesByRatingIter.next().getId());
+        assertEquals(33, favoritesByRatingIter.next().getId());
+        assertEquals(44, favoritesByRatingIter.next().getId());
         assertFalse(favoritesByRatingIter.hasNext());
     }
 
@@ -288,7 +313,6 @@ public class CartelDeNachosTest {
         c1.rate(p3, 3);
         c1.rate(p4, 4);
 
-        p1.favorite(c1);
         p2.favorite(c1);
         p3.favorite(c1);
         p4.favorite(c1);
@@ -321,8 +345,9 @@ public class CartelDeNachosTest {
         }
 
         // p1 not friends with p2
+        // p1 not likes c1
         assertFalse(p1.getFriends().contains(p2));
-        assertTrue(sys.getRecommendation(p1,c1,0));
+        assertFalse(sys.getRecommendation(p1,c1,0));
 
         sys.addConnection(p1,p2);
         // נאמר כי מסעדה
@@ -331,15 +356,72 @@ public class CartelDeNachosTest {
 
         // p1 -> p2 -> p3 -> p4 , 3 connections
 
+        assertFalse(sys.getRecommendation(p1,c1,0));
+        assertTrue(sys.getRecommendation(p1,c1,1));
+        assertTrue(sys.getRecommendation(p1,c1,2));
+        assertTrue(sys.getRecommendation(p1,c1,3));
+
+        // max-connection=3 <= t
+        assertTrue(sys.getRecommendation(p1,c1,4));
+        assertTrue(sys.getRecommendation(p1,c1,30));
+        assertTrue(sys.getRecommendation(p1,c1,300));
+
+        p1.favorite(c1);
         assertTrue(sys.getRecommendation(p1,c1,0));
         assertTrue(sys.getRecommendation(p1,c1,1));
         assertTrue(sys.getRecommendation(p1,c1,2));
         assertTrue(sys.getRecommendation(p1,c1,3));
 
-        assertFalse(sys.getRecommendation(p1,c1,4));//TODO: maybe we need to change implement here?
-        //TODO: accord to this they want all t friends to have it on their fav !
-        assertFalse(sys.getRecommendation(p1,c1,30));
-        assertFalse(sys.getRecommendation(p1,c1,300));
+        assertTrue(sys.getRecommendation(p1,c1,4));
+        assertTrue(sys.getRecommendation(p1,c1,40));
+        assertTrue(sys.getRecommendation(p1,c1,400));
+    }
+
+    @Test
+    public void getRecommendation2Test() throws Profesor.ProfesorAlreadyInSystemException, CasaDeBurrito.CasaDeBurritoAlreadyInSystemException, Profesor.ProfesorNotInSystemException, Profesor.SameProfesorException, Profesor.ConnectionAlreadyExistsException, CasaDeBurrito.RateRangeException, Profesor.UnratedFavoriteCasaDeBurritoException, CartelDeNachos.ImpossibleConnectionException, CasaDeBurrito.CasaDeBurritoNotInSystemException {
+        p1 = sys.joinCartel(1, "p1");
+        p2 = sys.joinCartel(2, "p2");
+        p3 = sys.joinCartel(3, "p3");
+        p4 = sys.joinCartel(4, "p4");
+
+        c1 = sys.addCasaDeBurrito(11, "c1", 11, emptySet());
+        c2 = sys.addCasaDeBurrito(22, "c2", 22, emptySet());
+
+        c1.rate(p1, 1);
+        c1.rate(p2, 2);
+        c1.rate(p3, 3);
+        c1.rate(p4, 4);
+
+        sys.addConnection(p1, p2);
+        sys.addConnection(p2, p3);
+        sys.addConnection(p3, p4);
+
+        assertFalse(sys.getRecommendation(p1,c1,0));
+        assertFalse(sys.getRecommendation(p2,c1,0));
+        assertFalse(sys.getRecommendation(p3,c1,0));
+        assertFalse(sys.getRecommendation(p4,c1,0));
+
+        p1.favorite(c1);
+        assertTrue(sys.getRecommendation(p1,c1,0));
+        assertTrue(sys.getRecommendation(p2,c1,1));
+        assertFalse(sys.getRecommendation(p3,c1,1));
+        assertFalse(sys.getRecommendation(p4,c1,1));
+
+        assertTrue(sys.getRecommendation(p2,c1,2));
+        assertTrue(sys.getRecommendation(p2,c1,3));
+        assertTrue(sys.getRecommendation(p2,c1,30));
+        assertTrue(sys.getRecommendation(p2,c1,300));
+
+        p2.favorite(c1);
+        assertTrue(sys.getRecommendation(p1,c1,0));
+        assertTrue(sys.getRecommendation(p2,c1,0));
+        assertTrue(sys.getRecommendation(p3,c1,1));
+
+        // c1 is NOT favored but still counts in recommendation
+        assertTrue(sys.getRecommendation(p4,c1,2));
+
+        p3.favorite(c1);
+        assertTrue(sys.getRecommendation(p4,c1,2));
     }
 
     @Test
