@@ -73,6 +73,7 @@ public class ProfesorImpl implements Profesor {
         return filtered;
     }
 
+
     @Override
     public Collection<CasaDeBurrito> filterAndSortFavorites(Comparator<CasaDeBurrito> comp, Predicate<CasaDeBurrito> p) {
         Collection<CasaDeBurrito> filtered = new TreeSet<>(comp); //initialize TreeSet with the given comparator
@@ -86,18 +87,19 @@ public class ProfesorImpl implements Profesor {
 
     @Override
     public Collection<CasaDeBurrito> favoritesByRating(int rLimit) {
-        return filterAndSortFavorites(
-                Comparator.comparingDouble(CasaDeBurrito::averageRating).reversed(),
-                casa -> casa.averageRating() >= rLimit
-        );
+        return favorites.stream().filter(s -> s.averageRating() >= rLimit).
+                sorted((Comparator.comparingDouble(CasaDeBurrito::averageRating).reversed()).
+                        thenComparing(CasaDeBurrito::distance).
+                        thenComparing(CasaDeBurrito::getId)).
+                    collect(Collectors.toList());
     }
-
     @Override
     public Collection<CasaDeBurrito> favoritesByDist(int dLimit) {
-        return filterAndSortFavorites(
-                Comparator.comparingInt(CasaDeBurrito::distance),
-                casa -> casa.distance() <= dLimit
-        );
+        return favorites.stream().filter(s -> s.distance() <= dLimit).
+                sorted((Comparator.comparingDouble(CasaDeBurrito::distance)).
+                        thenComparing((Comparator.comparingDouble(CasaDeBurrito::averageRating).reversed())).
+                        thenComparing(CasaDeBurrito::getId)).
+                collect(Collectors.toList());
     }
 
     @Override
@@ -107,7 +109,11 @@ public class ProfesorImpl implements Profesor {
         } else {
             return ((Profesor) this).getId() == ((Profesor) o).getId();
         }
+    }
 
+    @Override
+    public int hashCode(){
+        return this.id;
     }
 
     @Override

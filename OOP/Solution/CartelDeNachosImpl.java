@@ -78,7 +78,7 @@ public class CartelDeNachosImpl implements CartelDeNachos {
         if (!this.profesors.contains(p1) || !this.profesors.contains(p2)) {
             throw new Profesor.ProfesorNotInSystemException();
         }
-        if (p1.getFriends().contains(p2)) {
+        if (p1.getFriends().contains(p2) || p2.getFriends().contains(p1)) {
             throw new Profesor.ConnectionAlreadyExistsException();
         }
         p1.addFriend(p2);
@@ -86,14 +86,16 @@ public class CartelDeNachosImpl implements CartelDeNachos {
         return this;
     }
 
+    //TODO: fix!
     @Override
     public Collection<CasaDeBurrito> favoritesByRating(Profesor p) throws Profesor.ProfesorNotInSystemException {
         if (!this.profesors.contains(p) ) {
             throw new Profesor.ProfesorNotInSystemException();
         }
         TreeSet<Profesor> sorted = new TreeSet<>(Comparator.comparingInt(Profesor::getId));
-        sorted.addAll(p.getFriends());
-        Comparator<CasaDeBurrito> byRateing = (casa1, casa2) -> {
+        sorted.addAll(p.getFriends()); //all friends sorted by their ID's
+
+        Comparator<CasaDeBurrito> byRating = (casa1, casa2) -> {
             return (int)(casa2.averageRating() - casa1.averageRating());
         };
         Comparator<CasaDeBurrito> byDist = (casa1, casa2) -> {
@@ -102,16 +104,13 @@ public class CartelDeNachosImpl implements CartelDeNachos {
         Comparator<CasaDeBurrito> byId = (casa1, casa2) -> {
             return (int)(casa1.getId() - casa2.getId());
         };
-//        for (TreeSet<Profesor> friend : sorted)
-        List<CasaDeBurrito> burritos = new ArrayList<>();
-        for (Profesor friend : sorted) {
-            friend.favorites().stream().sorted(byRateing.thenComparing(byDist.thenComparing(byId))).forEach(burritos::add);
-        }
-//        sorted.stream()
-//                .map(Profesor::favorites)
-//                    .map(favCollection -> favCollection.stream().sorted(byRateing.thenComparing(byDist.thenComparing(byId))).forEach(b -> burritos.add(b)))
-//                .forEach();
 
+        List<CasaDeBurrito> burritos = new ArrayList<>();
+
+        for (Profesor friend : sorted) {
+            friend.favorites().stream().sorted(byRating.thenComparing(byDist.thenComparing(byId))).
+                    forEach(burritos::add);
+        }
         return burritos.stream().distinct().collect(Collectors.toList());
     }
 
@@ -122,7 +121,7 @@ public class CartelDeNachosImpl implements CartelDeNachos {
         }
         TreeSet<Profesor> sorted = new TreeSet<>(Comparator.comparingInt(Profesor::getId));
         sorted.addAll(p.getFriends());
-        Comparator<CasaDeBurrito> byRateing = (casa1, casa2) -> {
+        Comparator<CasaDeBurrito> byRating = (casa1, casa2) -> {
             return (int)(casa2.averageRating() - casa1.averageRating());
         };
         Comparator<CasaDeBurrito> byDist = (casa1, casa2) -> {
@@ -134,7 +133,7 @@ public class CartelDeNachosImpl implements CartelDeNachos {
 //        for (TreeSet<Profesor> friend : sorted)
         List<CasaDeBurrito> burritos = new ArrayList<>();
         for (Profesor friend : sorted) {
-            friend.favorites().stream().sorted(byDist.thenComparing(byRateing.thenComparing(byId))).forEach(burritos::add);
+            friend.favorites().stream().sorted(byDist.thenComparing(byRating.thenComparing(byId))).forEach(burritos::add);
         }
         return burritos.stream().distinct().collect(Collectors.toList());
     }
@@ -172,6 +171,7 @@ public class CartelDeNachosImpl implements CartelDeNachos {
         return aux(p,c,t);
     }
 
+    //TODO: fails for empty system!
     @Override
     public List<Integer> getMostPopularRestaurantsIds() {
         Map<Integer, Integer> ranks = new HashMap<>();
@@ -207,12 +207,12 @@ public class CartelDeNachosImpl implements CartelDeNachos {
         List<Integer> pIds= new ArrayList<>();
         pIds = this.profesors.stream().map(p -> p.getId()).sorted((i1,i2) -> i1-i2).collect(Collectors.toList());
         String names = pIds.toString();
-        String profs = "Registered Profesores: " + names.substring(names.indexOf("[")+1, names.indexOf("]")) + ".\n";
+        String profs = "Registered profesores: " + names.substring(names.indexOf("[")+1, names.indexOf("]")) + ".\n";
 //  * Id: <id>.
         List<Integer> cIds= new ArrayList<>();
         cIds = this.rests.stream().map(c -> c.getId()).sorted((i1,i2) -> i1-i2).collect(Collectors.toList());
         names = cIds.toString();
-        String casas = "casas de burrito: " + names.substring(names.indexOf("[")+1, names.indexOf("]")) + ".\n";
+        String casas = "Registered casas de burrito: " + names.substring(names.indexOf("[")+1, names.indexOf("]")) + ".\n";
         //
         String friends = "Profesores:\n";
 
@@ -226,6 +226,6 @@ public class CartelDeNachosImpl implements CartelDeNachos {
             friends += i + " -> " + prof.getFriends().stream().map(Profesor::getId).sorted((i1,i2) -> i1-i2).collect(Collectors.toList()) +".\n";
         }
 
-        return profs + casas + friends + "End profesores.\n";
+        return profs + casas + friends + "End profesores.";
     }
 }

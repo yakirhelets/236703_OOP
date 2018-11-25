@@ -239,7 +239,7 @@ public class CartelDeNachosTest {
         // CasaDeBurritoImpl{id=11, name='c1', dist=11, menu=[], rates={2=1, 3=4}}
         // CasaDeBurritoImpl{id=33, name='c3', dist=33, menu=[], rates={3=3}}
 
-        assertEquals(22, favoritesByRatingIter.next().getId());
+        assertEquals(22, favoritesByRatingIter.next().getId()); //TODO fix here! we get: c1->c2->c3
         assertEquals(11, favoritesByRatingIter.next().getId());
         assertEquals(33, favoritesByRatingIter.next().getId());
         assertFalse(favoritesByRatingIter.hasNext());
@@ -336,7 +336,8 @@ public class CartelDeNachosTest {
         assertTrue(sys.getRecommendation(p1,c1,2));
         assertTrue(sys.getRecommendation(p1,c1,3));
 
-        assertFalse(sys.getRecommendation(p1,c1,4));
+        assertFalse(sys.getRecommendation(p1,c1,4));//TODO: maybe we need to change implement here?
+        //TODO: accord to this they want all t friends to have it on their fav !
         assertFalse(sys.getRecommendation(p1,c1,30));
         assertFalse(sys.getRecommendation(p1,c1,300));
     }
