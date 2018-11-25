@@ -170,12 +170,8 @@ public class CartelDeNachosImpl implements CartelDeNachos {
         return aux(p,c,t);
     }
 
-    //TODO: fails for empty system!
     @Override
     public List<Integer> getMostPopularRestaurantsIds() {
-        if (rests.isEmpty()) {
-            return new ArrayList<>();//returns an empty list in case there's no restaurants
-        }
         Map<Integer, Integer> ranks = new HashMap<>();
         for(CasaDeBurrito rest : rests) {
             ranks.put(rest.getId(), 0);
@@ -190,6 +186,9 @@ public class CartelDeNachosImpl implements CartelDeNachos {
         }
         List<Integer> ranking = new ArrayList<>();
         ranking = ranks.values().stream().sorted().collect(Collectors.toList());
+        if (ranking.isEmpty()) {
+            return ranking;//returns an empty list in case there's no restaurants or favorites
+        }
         int max = ranking.get(ranking.size()-1);
 
         List<Integer> maxRanking = new ArrayList<>();
