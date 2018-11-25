@@ -238,7 +238,6 @@ public class ProfesorImplTest
                 casaName1 + ", " +
                 casaName2 + ", " +
                 casaName3 + ".";
-
         Assert.assertEquals(expectedString, profesor.toString());
     }
 

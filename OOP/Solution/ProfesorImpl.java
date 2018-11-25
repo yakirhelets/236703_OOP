@@ -118,16 +118,20 @@ public class ProfesorImpl implements Profesor {
     @Override
     public String toString() {
 //  * OOP.Provided.Profesor: <name>.
-        String name = "OOP.Provided.Profesor: " + this.name + "\n";
+        String name = "Profesor: " + this.name + ".\n";
 //  * Id: <id>.
-        String idStr = "Id: " + Integer.toString(this.id) + "\n";
-//     * Favorites: <casaName1, casaName2, casaName3...>
-        String casas = this.filterAndSortFavorites(//sort by lexicographic order
-                (casa1, casa2) -> (casa1.getName().compareTo(casa2.getName())),
-                casa -> true
-        ).toString();
-        String favs = "Favorites: " + casas.substring(casas.indexOf("[") + 1, casas.indexOf("]")) + "\n";//removing the brackets from the string
+        String idStr = "Id: " + Integer.toString(this.id) + ".\n";
+//     * Favorites:
+        String fixed;
+        if (this.favorites.isEmpty()) {
+            fixed = "Favorites: .";
+        } else {
+            String casas = this.favorites.stream().sorted((c1,c2) -> c1.getName().compareTo(c2.getName()))
+                    .map(CasaDeBurrito::getName).reduce("", (m1,m2) -> m1 +", " + m2) + ".";
+            fixed = "Favorites: " + casas.substring(casas.indexOf(",")+2); //removes the first "," from the string
+        }
 
-        return name + idStr + favs;
+
+        return name + idStr + fixed;
     }
 }

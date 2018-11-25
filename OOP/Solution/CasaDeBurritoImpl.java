@@ -83,13 +83,16 @@ public class CasaDeBurritoImpl implements CasaDeBurrito {
 
     @Override
     public String toString(){
-        return "OOP.Provided.CasaDeBurrito: " +
-                getName() + "./n" +
+        String menustr = menu.stream().sorted().reduce("", (m1,m2) -> m1 +", " + m2) + ".";
+        String fix = menustr.substring(menustr.indexOf(",")+2); //removes the first "," from the string
+        String res = "CasaDeBurrito: " +
+                getName() + ".\n" +
                 "Id: " +
-                getId() + "./n" +
-                "Distance" +
-                distance() + "./n" +
-                menu.stream().sorted().reduce("", (m1,m2) -> m1 +", " + m2) + "./n";
+                getId() + ".\n" +
+                "Distance: " +
+                distance() + ".\n" +
+                "Menu: " + fix;
+        return res;
     }
 
     @Override
