@@ -5,7 +5,6 @@ import OOP.Provided.CasaDeBurrito;
 import OOP.Provided.Profesor;
 
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class CartelDeNachosImpl implements CartelDeNachos {
@@ -174,6 +173,9 @@ public class CartelDeNachosImpl implements CartelDeNachos {
     //TODO: fails for empty system!
     @Override
     public List<Integer> getMostPopularRestaurantsIds() {
+        if (rests.isEmpty()) {
+            return new ArrayList<>();//returns an empty list in case there's no restaurants
+        }
         Map<Integer, Integer> ranks = new HashMap<>();
         for(CasaDeBurrito rest : rests) {
             ranks.put(rest.getId(), 0);
