@@ -19,7 +19,7 @@ public class CartelDeNachosImpl implements CartelDeNachos {
     @Override
     public Profesor joinCartel(int id, String name) throws Profesor.ProfesorAlreadyInSystemException {
         Profesor p = new ProfesorImpl(id, name);
-        if (profesors.contains(p)) { //same here.. we need to check ID instead of OBJ
+        if (profesors.contains(p)) {
             throw new Profesor.ProfesorAlreadyInSystemException();
         }
             profesors.add(p);
@@ -77,11 +77,14 @@ public class CartelDeNachosImpl implements CartelDeNachos {
         if (!this.profesors.contains(p1) || !this.profesors.contains(p2)) {
             throw new Profesor.ProfesorNotInSystemException();
         }
-        if (p1.getFriends().contains(p2) || p2.getFriends().contains(p1)) {
+        Profesor p1_from_set = this.getProfesor(p1.getId());
+        Profesor p2_from_set = this.getProfesor(p2.getId());
+
+        if (p1_from_set.getFriends().contains(p2) || p2_from_set.getFriends().contains(p1)) {
             throw new Profesor.ConnectionAlreadyExistsException();
         }
-        p1.addFriend(p2);
-        p2.addFriend(p1);
+        p1_from_set.addFriend(p2);
+        p2_from_set.addFriend(p1);
         return this;
     }
 

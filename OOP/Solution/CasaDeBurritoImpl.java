@@ -13,7 +13,7 @@ public class CasaDeBurritoImpl implements CasaDeBurrito {
     private String name;
     private int distance;
     private Set<String> menu;
-    private Map<Integer, Integer> rates; //added new set here! (profesorID,profesorRate)
+    private Map<Integer, Integer> rates;
 
 
     //constructor
@@ -51,7 +51,7 @@ public class CasaDeBurritoImpl implements CasaDeBurrito {
 
     @Override
     public CasaDeBurrito rate (Profesor p, int r) throws RateRangeException {
-        if(r < 0 || r > 5){ //illigal rating
+        if(r < 0 || r > 5){ //illegal rating
             throw new RateRangeException();
         }
         int profesorID = p.getId();

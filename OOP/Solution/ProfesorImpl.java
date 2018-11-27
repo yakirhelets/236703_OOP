@@ -30,9 +30,7 @@ public class ProfesorImpl implements Profesor {
         if (!c.isRatedBy(this)) { //profesor didn't rate this rest yet!
             throw new UnratedFavoriteCasaDeBurritoException();
         } else {
-            favorites.add(c); //TODO:in favoriteTest - they are comparing two different rest objects with the same id
-            //we are not passing it because we count them as different objects and not by their Id's..
-            //--will need to change the implemnt(Set of Id's maybe..) or check if its currect to test this case.
+            favorites.add(c);
         }
         return this;
     }
