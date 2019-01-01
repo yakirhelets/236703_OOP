@@ -8,7 +8,7 @@ public class OOPExpectedExceptionImpl implements OOPExpectedException {
      * @return the expected exception type.
      */
     @Override
-    public Class<? extends Exception> getExpectedException() {
+    public Class<? extends Exception> getExpectedException() { //TODO: check possibility of using an enum
         return ;
     }
 
