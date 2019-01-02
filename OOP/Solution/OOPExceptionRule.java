@@ -7,6 +7,6 @@ import java.lang.annotation.Target;
 import static java.lang.annotation.ElementType.FIELD;
 
 @Target(FIELD)
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RetentionPolicy.RUNTIME) //available only on OOPExpectedException Types!
 public @interface OOPExceptionRule {
 }

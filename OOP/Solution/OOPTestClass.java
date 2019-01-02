@@ -1,5 +1,6 @@
 package OOP.Solution;
 
+import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 
@@ -7,12 +8,9 @@ import static OOP.Solution.OOPTestClass.OOPTestClassType.*; //TODO: check if we 
 import static java.lang.annotation.ElementType.TYPE;
 
 @Target(TYPE)
-public @interface OOPTestClass {
-
-    // TODO: check privacy level
+public @interface OOPTestClass { //Retention is set by default to CLASS now
     enum OOPTestClassType {
         UNORDERED, ORDERED
     }
-
     OOPTestClassType value() default UNORDERED;
 }

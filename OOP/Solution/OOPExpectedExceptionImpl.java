@@ -3,6 +3,12 @@ package OOP.Solution;
 import OOP.Provided.OOPExpectedException;
 
 public class OOPExpectedExceptionImpl implements OOPExpectedException {
+    Exception exp;
+    String msg;
+    public OOPExpectedExceptionImpl(){
+        exp = null;
+        msg = "";
+    }
 
     /**
      * @return the expected exception type.
@@ -62,7 +68,8 @@ public class OOPExpectedExceptionImpl implements OOPExpectedException {
      * If this is the state of the ExpectedException object, then no exception is expected to be thrown.
      * So, if an exception is thrown, an OOPResult with ERROR should be returned
      */
-    static OOPExpectedException none() {
-        return;
+    static OOPExpectedException none()
+    {
+        return new OOPExpectedExceptionImpl();
     }
 }

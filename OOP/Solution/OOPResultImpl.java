@@ -4,10 +4,11 @@ import OOP.Provided.OOPResult;
 
 public class OOPResultImpl implements OOPResult {
 
-    private OOPTestResult resultType;
+    private OOPTestResult resultType; //enum result type
+    //exception?
     private String resultMessage;
 
-    public OOPResultImpl(OOPTestResult resultType, String resultMessage) {
+    public OOPResultImpl(OOPTestResult resultType, String resultMessage) { //C'tor
         this.resultType = resultType;
         this.resultMessage = resultMessage;
     }
