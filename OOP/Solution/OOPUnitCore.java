@@ -1,10 +1,13 @@
 package OOP.Solution;
 
 import OOP.Provided.OOPAssertionFailure;
+import OOP.Provided.OOPResult;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class OOPUnitCore {
     private OOPUnitCore(){} //private C'tor
@@ -23,16 +26,30 @@ public class OOPUnitCore {
         throw new OOPAssertionFailure();
     }
 
-
+    //TODO: should we merge the functions to get one overloaded function ??
     OOPTestSummary runClass(Class<?> testClass) throws IllegalArgumentException {
-        if (testClass == null || testClass.isAnnotationPresent(OOPTestClass.class) ) {
+        if (testClass == null || !testClass.isAnnotationPresent(OOPTestClass.class) ) {
             throw new IllegalArgumentException();
         }
+        //TODO work flow ->
+        //check if class has ordered annotation and testClass annotation
+        //find Exception rules
+        //run setup mwthod
+        //run all before for methods in its array
+        //run OOPTest methods by order (if needed)
+        //run all after for methods in its array
+        //put all the results in the testMap below
+
+        Map<String, OOPResult> testMap = new HashMap<String, OOPResult>(); //map for storing the test results for each method
+        //fill the map with the results
+        OOPTestSummary testSummary = new OOPTestSummary(testMap);
+        return testSummary;
     }
+
 
         //main method for running the test methods according to the annotations tagging
     OOPTestSummary runClass(Class<?> testClass, String tag) throws IllegalArgumentException {
-        if (testClass == null || tag == null || testClass.isAnnotationPresent(OOPTestClass.class) ){
+        if (testClass == null || tag == null || !testClass.isAnnotationPresent(OOPTestClass.class) ){
             throw new IllegalArgumentException();
         }
         try {
