@@ -30,6 +30,7 @@ public class OOPUnitCore {
         }
     }
 
+        //main method for running the test methods according to the annotations tagging
     OOPTestSummary runClass(Class<?> testClass, String tag) throws IllegalArgumentException {
         if (testClass == null || tag == null || testClass.isAnnotationPresent(OOPTestClass.class) ){
             throw new IllegalArgumentException();
@@ -46,7 +47,7 @@ public class OOPUnitCore {
             Object[] testMethodsArray = Arrays.stream(testClass.getMethods()).
                     filter(m -> m.isAnnotationPresent(OOPTest.class)).toArray(); //SETUP methods array
             for( Method m : testMethodsArray) { //run all method with the corresponding tag
-                if (m.getAnnotation(OOPTest.class).tag == tag) {
+                if (m.getAnnotation(OOPTest.class).tag().equals(tag)) { // check if tags are the same
                     //run all before of method m
                     object.m(); //TODO fix
                     //run all after of method m
