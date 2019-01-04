@@ -2,6 +2,7 @@ package OOP.Tests;
 
 import OOP.Provided.OOPAssertionFailure;
 import OOP.Provided.OOPExpectedException;
+import OOP.Solution.*;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

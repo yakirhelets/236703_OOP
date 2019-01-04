@@ -7,7 +7,7 @@ import java.util.Map;
 public class OOPTestSummary {
     private int numSuccesses = 0;
     private int numFailures = 0;
-    private int numExceptionMismathces = 0;
+    private int numExceptionMismatches = 0;
     private int numErrors = 0;
 
     public OOPTestSummary(Map<String, OOPResult> testMap) {
@@ -21,7 +21,7 @@ public class OOPTestSummary {
                             numFailures++;
                             break;
                         case EXPECTED_EXCEPTION_MISMATCH:
-                            numExceptionMismathces++;
+                            numExceptionMismatches++;
                             break;
                         case ERROR:
                             numErrors++;
@@ -39,8 +39,8 @@ public class OOPTestSummary {
         return numFailures;
     }
 
-    public int getNumExceptionMismathces() {
-        return numExceptionMismathces;
+    public int getNumExceptionMismatches() {
+        return numExceptionMismatches;
     }
 
     public int getNumErrors() {

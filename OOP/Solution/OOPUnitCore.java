@@ -4,15 +4,17 @@ import OOP.Provided.OOPAssertionFailure;
 import OOP.Provided.OOPResult;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class OOPUnitCore {
     private OOPUnitCore(){} //private C'tor
 
-    static void assertEquals(Object expected, Object actual) throws OOPAssertionFailure {
+    public static void assertEquals(Object expected, Object actual) throws OOPAssertionFailure {
         if(expected == null || actual == null ){
             throw new OOPAssertionFailure();
         }
@@ -27,27 +29,73 @@ public class OOPUnitCore {
     }
 
     //TODO: should we merge the functions to get one overloaded function ??
-    OOPTestSummary runClass(Class<?> testClass) throws IllegalArgumentException {
+    public static OOPTestSummary runClass(Class<?> testClass) throws IllegalArgumentException {
         if (testClass == null || !testClass.isAnnotationPresent(OOPTestClass.class) ) {
             throw new IllegalArgumentException();
         }
-        //TODO work flow ->
-        //check if class has ordered annotation and testClass annotation
-        //find Exception rules
-        //run setup mwthod
-        //run all before for methods in its array
-        //run OOPTest methods by order (if needed)
-        //run all after for methods in its array
-        //put all the results in the testMap below
 
         Map<String, OOPResult> testMap = new HashMap<String, OOPResult>(); //map for storing the test results for each method
+
+        //TODO work flow ->
+        //TODO: check if class has ordered annotation and testClass annotation.
+        if (testClass.getAnnotation(OOPTestClass.class).value() == OOPTestClass.OOPTestClassType.ORDERED) {
+            // tests are ordered
+            // do something
+        }
+        //TODO: find Exception rules
+
+        //run setup method
+        Arrays.stream(testClass.getMethods()).filter(m -> m.isAnnotationPresent(OOPSetup.class)).forEach(m -> {
+            try {
+                m.invoke(testClass); // calling the setup methods from testClass
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        });
+
+        //run OOPTest methods by order (if needed)
+        // TODO: apply order. Should probably add "sort()" to the stream
+        Arrays.stream(testClass.getMethods()).filter(method -> method.isAnnotationPresent(OOPTest.class)).forEach(testMethod -> { // run all OOPTest methods
+            try {
+                // run all "before" methods that are related to testMethod
+                Arrays.stream(testClass.getMethods()).filter(beforeMethod -> beforeMethod.isAnnotationPresent(OOPBefore.class) // beforeMethod contains the "OOPBefore" annotation
+                && Stream.of(beforeMethod.getAnnotation(OOPBefore.class).value()).anyMatch(methodName -> methodName.equals(testMethod.getName()))).forEach(beforeMethod -> { // beforeMethod contains "testMethod" in the "value" field
+                    try {
+                        beforeMethod.invoke(testClass);
+                    } catch (IllegalAccessException | InvocationTargetException e) {
+                        e.printStackTrace();
+                    }
+                });
+
+                testMethod.invoke(testClass); // calling the test methods from testClass
+                //TODO: put the test result in a map
+                testMap.put(testMethod.getName(), "some test result");
+
+
+                // run all "after" methods that are related to testMethod
+                Arrays.stream(testClass.getMethods()).filter(afterMethod -> afterMethod.isAnnotationPresent(OOPAfter.class) // afterMethod contains the "OOPBefore" annotation
+                        && Stream.of(afterMethod.getAnnotation(OOPBefore.class).value()).anyMatch(methodName -> methodName.equals(testMethod.getName()))).forEach(afterMethod -> { // afterMethod contains "testMethod" in the "value" field
+                    try {
+                        afterMethod.invoke(testClass);
+                    } catch (IllegalAccessException | InvocationTargetException e) {
+                        e.printStackTrace();
+                    }
+                });
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        });
+        //put all the results in the testMap below
+
+
         //fill the map with the results
         OOPTestSummary testSummary = new OOPTestSummary(testMap);
         return testSummary;
     }
 
 
-        //main method for running the test methods according to the annotations tagging
+    //main method for running the test methods according to the annotations tagging
+    //TODO: fix according to the previous runClass()
     OOPTestSummary runClass(Class<?> testClass, String tag) throws IllegalArgumentException {
         if (testClass == null || tag == null || !testClass.isAnnotationPresent(OOPTestClass.class) ){
             throw new IllegalArgumentException();
