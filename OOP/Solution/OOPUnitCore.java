@@ -2,6 +2,7 @@ package OOP.Solution;
 
 import OOP.Provided.OOPAssertionFailure;
 import OOP.Provided.OOPResult;
+import OOP.Provided.OOPResult.OOPTestResult;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -68,9 +69,8 @@ public class OOPUnitCore {
                 });
 
                 testMethod.invoke(testClass); // calling the test methods from testClass
-                //TODO: put the test result in a map
-                testMap.put(testMethod.getName(), "some test result");
-
+                // if we arrived here, no exception were thrown => SUCCESS
+                testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.SUCCESS, null));
 
                 // run all "after" methods that are related to testMethod
                 Arrays.stream(testClass.getMethods()).filter(afterMethod -> afterMethod.isAnnotationPresent(OOPAfter.class) // afterMethod contains the "OOPBefore" annotation
@@ -81,6 +81,10 @@ public class OOPUnitCore {
                         e.printStackTrace();
                     }
                 });
+                // analyzing the test result
+                // TODO: add case of SUCCESS
+            } catch (OOPAssertionFailure e) { // case of FAILURE
+                testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.FAILURE, e.getMessage()));
             } catch (IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
             }

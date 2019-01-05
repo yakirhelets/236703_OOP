@@ -3,9 +3,9 @@ package OOP.Solution;
 import OOP.Provided.OOPExpectedException;
 
 public class OOPExpectedExceptionImpl implements OOPExpectedException {
-    Exception exp;
-    String msg;
-    public OOPExpectedExceptionImpl(){
+    private Class<? extends Exception> exp;
+    private String msg;
+    private OOPExpectedExceptionImpl(){
         exp = null;
         msg = "";
     }
@@ -15,7 +15,7 @@ public class OOPExpectedExceptionImpl implements OOPExpectedException {
      */
     @Override
     public Class<? extends Exception> getExpectedException() { //TODO: check possibility of using an enum
-        return ;
+        return exp;
     }
 
     /**
@@ -26,6 +26,7 @@ public class OOPExpectedExceptionImpl implements OOPExpectedException {
      */
     @Override
     public OOPExpectedException expect(Class<? extends Exception> expected) {
+        exp = expected;
         return this;
     }
 
@@ -42,7 +43,8 @@ public class OOPExpectedExceptionImpl implements OOPExpectedException {
      */
     @Override
     public OOPExpectedException expectMessage(String msg) {
-        return null;
+        this.msg = msg;
+        return this;
     }
 
     /**
@@ -57,7 +59,8 @@ public class OOPExpectedExceptionImpl implements OOPExpectedException {
      */
     @Override
     public boolean assertExpected(Exception e) {
-        return false;
+        return (e.equals(this.getExpectedException()) &&
+                this.msg.toLowerCase().contains(e.getMessage().toLowerCase()));
     }
 
     /**
@@ -68,8 +71,7 @@ public class OOPExpectedExceptionImpl implements OOPExpectedException {
      * If this is the state of the ExpectedException object, then no exception is expected to be thrown.
      * So, if an exception is thrown, an OOPResult with ERROR should be returned
      */
-    static OOPExpectedException none()
-    {
+    static OOPExpectedException none() {
         return new OOPExpectedExceptionImpl();
     }
 }
