@@ -59,7 +59,7 @@ public class OOPExpectedExceptionImpl implements OOPExpectedException {
      */
     @Override
     public boolean assertExpected(Exception e) {
-        return (e.equals(this.getExpectedException()) &&
+        return (this.getExpectedException().equals(e) &&
                 this.msg.toLowerCase().contains(e.getMessage().toLowerCase()));
     }
 

@@ -1,6 +1,7 @@
 package OOP.Solution;
 
 import OOP.Provided.OOPAssertionFailure;
+import OOP.Provided.OOPExpectedException;
 import OOP.Provided.OOPResult;
 import OOP.Provided.OOPResult.OOPTestResult;
 
@@ -82,11 +83,13 @@ public class OOPUnitCore {
                     }
                 });
                 // analyzing the test result
-                // TODO: add case of SUCCESS
-            } catch (OOPAssertionFailure e) { // case of FAILURE
-                testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.FAILURE, e.getMessage()));
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                e.printStackTrace();
+                // TODO: add all cases of exceptions
+            } catch (Exception e) { // case of SUCCESS
+                if (OOPExpectedException.none().assertExpected(e)) { // case the exception thrown fit the expected
+                    testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.SUCCESS, null));
+                } else {
+                    testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.FAILURE, e.getMessage()));
+                }
             }
         });
         //put all the results in the testMap below
