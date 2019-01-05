@@ -5,7 +5,7 @@ import OOP.Provided.OOPExpectedException;
 public class OOPExpectedExceptionImpl implements OOPExpectedException {
     private Class<? extends Exception> exp;
     private String msg;
-    private OOPExpectedExceptionImpl(){
+    private OOPExpectedExceptionImpl(){ //C'tor
         exp = null;
         msg = "";
     }
@@ -71,7 +71,7 @@ public class OOPExpectedExceptionImpl implements OOPExpectedException {
      * If this is the state of the ExpectedException object, then no exception is expected to be thrown.
      * So, if an exception is thrown, an OOPResult with ERROR should be returned
      */
-    static OOPExpectedException none() {
+    public static OOPExpectedException none() {
         return new OOPExpectedExceptionImpl();
     }
 }

@@ -8,9 +8,8 @@ import OOP.Provided.OOPResult.OOPTestResult;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class OOPUnitCore {
@@ -26,27 +25,38 @@ public class OOPUnitCore {
         }
     }
 
-    static void fail() throws OOPAssertionFailure { //throws OOPAssertionFauilure Exception
+    public static void fail() throws OOPAssertionFailure { //throws OOPAssertionFauilure Exception
         throw new OOPAssertionFailure();
     }
 
     //TODO: should we merge the functions to get one overloaded function ??
     public static OOPTestSummary runClass(Class<?> testClass) throws IllegalArgumentException {
-        if (testClass == null || !testClass.isAnnotationPresent(OOPTestClass.class) ) {
+        if (testClass == null || !testClass.isAnnotationPresent(OOPTestClass.class) ) { //if not a TestClass or equals null -> throw exception
             throw new IllegalArgumentException();
         }
 
-        Map<String, OOPResult> testMap = new HashMap<String, OOPResult>(); //map for storing the test results for each method
+        //map for storing the test results for each method
+        Map<String, OOPResult> testMap = new HashMap<String, OOPResult>();
 
-        //TODO work flow ->
-        //TODO: check if class has ordered annotation and testClass annotation.
+        //TODO creating a new class instance - we need to apply those methods on this instance!
+        Constructor<?> cons = testClass.getConstructor(testClass.getClass());
+        Object object = cons.newInstance();
+
+        List<Method> testMethods = new ArrayList<Method>(); //array list for testMethods!
+
+        //check if class has ordered annotation and testClass annotation.
         if (testClass.getAnnotation(OOPTestClass.class).value() == OOPTestClass.OOPTestClassType.ORDERED) {
-            // tests are ordered
-            // do something
+            Arrays.stream(testClass.getMethods()).filter(m -> m.isAnnotationPresent(OOPTest.class)).
+                    sorted(Comparator.comparingInt(a -> a.getAnnotation(OOPTest.class).order())).
+                    forEach(a -> testMethods.add(a)); //take the lowest order first
+        } else { //UNORDERED
+            Arrays.stream(testClass.getMethods()).filter(m -> m.isAnnotationPresent(OOPTest.class)).
+                    forEach(a -> testMethods.add(a));
         }
+
         //TODO: find Exception rules
 
-        //run setup method
+        //run setup method - *also need to run for father and so on*
         Arrays.stream(testClass.getMethods()).filter(m -> m.isAnnotationPresent(OOPSetup.class)).forEach(m -> {
             try {
                 m.invoke(testClass); // calling the setup methods from testClass
@@ -65,6 +75,7 @@ public class OOPUnitCore {
                     try {
                         beforeMethod.invoke(testClass);
                     } catch (IllegalAccessException | InvocationTargetException e) {
+                        //we should check what kind of exception we got here and compare it to ExpectedException if available
                         e.printStackTrace();
                     }
                 });
@@ -75,7 +86,7 @@ public class OOPUnitCore {
 
                 // run all "after" methods that are related to testMethod
                 Arrays.stream(testClass.getMethods()).filter(afterMethod -> afterMethod.isAnnotationPresent(OOPAfter.class) // afterMethod contains the "OOPBefore" annotation
-                        && Stream.of(afterMethod.getAnnotation(OOPBefore.class).value()).anyMatch(methodName -> methodName.equals(testMethod.getName()))).forEach(afterMethod -> { // afterMethod contains "testMethod" in the "value" field
+                        && Stream.of(afterMethod.getAnnotation(OOPAfter.class).value()).anyMatch(methodName -> methodName.equals(testMethod.getName()))).forEach(afterMethod -> { // afterMethod contains "testMethod" in the "value" field
                     try {
                         afterMethod.invoke(testClass);
                     } catch (IllegalAccessException | InvocationTargetException e) {
