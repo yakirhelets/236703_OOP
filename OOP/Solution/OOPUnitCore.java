@@ -40,15 +40,12 @@ public class OOPUnitCore {
         Map<String, OOPResult> testMap = new HashMap<String, OOPResult>();
         Object object = null; //class instance
 
-        //TODO creating a new class instance - we need to apply those methods on this instance!
         try {
-//            Constructor<?> cons = testClass.getConstructor(testClass.getClass());
-//            object = cons.newInstance();
             object = testClass;
-
 
             //getting the expected exception variable
             final OOPExpectedException[] expected = {null};
+            //making a class instance
             Object finalObject = ((Class) object).newInstance();
 
             Arrays.stream(testClass.getDeclaredFields()).
@@ -118,12 +115,13 @@ public class OOPUnitCore {
                     //CALL THE TEST METHOD
                     testMethod.invoke(finalObject);
 
-                    if (expected[0].getExpectedException() != null) { // WE EXPECTED AN EXCEPTION BUT DIDN'T GET ANY
+                    if (expected[0] != null && expected[0].getExpectedException() != null) { // WE EXPECTED AN EXCEPTION BUT DIDN'T GET ANY
                         testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, expected[0].getClass().getName()));
                     } else { // if we arrived here, no exception were thrown => SUCCESS
                         testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.SUCCESS, null));
                     }
                 }
+                //TODO: check the logic here
                 catch (InvocationTargetException e) {
                     if(e.getCause().getClass().equals(OOPAssertionFailure.class)){ //ASESRTION FAILURE
                         testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.FAILURE, e.getCause().getMessage()));
@@ -163,7 +161,7 @@ public class OOPUnitCore {
             return testSummary;
 
         } catch (Exception e) {
-            //??
+            //TODO what here?
         }
         return null;
     }
