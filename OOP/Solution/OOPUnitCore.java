@@ -118,28 +118,30 @@ public class OOPUnitCore {
                     //CALL THE TEST METHOD
                     testMethod.invoke(finalObject);
 
-
-                    if (expected[0] != null) { // WE EXPECTED AN EXCEPTION BUT DIDN'T GET ANY
+                    if (expected[0].getExpectedException() != null) { // WE EXPECTED AN EXCEPTION BUT DIDN'T GET ANY
                         testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, expected[0].getClass().getName()));
                     } else { // if we arrived here, no exception were thrown => SUCCESS
                         testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.SUCCESS, null));
                     }
-                } catch (OOPAssertionFailure e) {
-                    testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.FAILURE, e.getMessage()));
-                } catch (Exception e) {
-                    if (expected[0].assertExpected(e)) { // case the exception thrown fit the expected
+                }
+                catch (InvocationTargetException e) {
+                    if(e.getCause().getClass().equals(OOPAssertionFailure.class)){ //ASESRTION FAILURE
+                        testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.FAILURE, e.getCause().getMessage()));
+                    }
+                    else if (expected[0].assertExpected((Exception)e.getCause())) { // case the exception thrown fit the expected
                         testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.SUCCESS, null));
                     } else {
-                            if (expected[0].getExpectedException().equals(e)) { //DONT HAVE THE SAME MESSAGE
-                                OOPExceptionMismatchError mismatch = new OOPExceptionMismatchError(expected[0].getExpectedException(), e.getClass());
-                                testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.EXPECTED_EXCEPTION_MISMATCH, mismatch.getMessage()));
-                            }
-                            if (expected[0] == null) { //WE DIDN'T EXPECT TO GET AN EXCEPTION BUT WE GOT ONE
-                                testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, e.getClass().getName()));
-                            }
+                        if (expected[0].getExpectedException().equals(e.getCause())) { //DONT HAVE THE SAME MESSAGE
+                            OOPExceptionMismatchError mismatch = new OOPExceptionMismatchError(expected[0].getExpectedException(), e.getClass()); //TODO change!
+                            testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.EXPECTED_EXCEPTION_MISMATCH, mismatch.getMessage()));
                         }
-
-                }
+                        if (expected[0] == null) { //WE DIDN'T EXPECT TO GET AN EXCEPTION BUT WE GOT ONE
+                            testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, e.getCause().getClass().getName()));
+                        }
+                    }
+                    } catch (Exception e) {
+                        //TODO what here?
+                    }
 
                 // run all "AFTER METHODS" methods that are related to testMethod
                 classList.stream().forEach(c ->

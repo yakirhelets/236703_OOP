@@ -61,8 +61,10 @@ public class OOPExpectedExceptionImpl implements OOPExpectedException {
     public boolean assertExpected(Exception e) {
         if (this.getExpectedException() == null) { // if we don't expect any exception
             return false;
-        } else return (this.getExpectedException().equals(e) &&
-                this.msg.toLowerCase().contains(e.getMessage().toLowerCase()));
+        } else {
+            return (this.getExpectedException().equals(e.getClass()) &&
+                    e.getMessage().toLowerCase().contains(this.msg.toLowerCase()));
+        }
     }
 
     /**
