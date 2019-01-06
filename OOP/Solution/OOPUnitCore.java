@@ -1,6 +1,7 @@
 package OOP.Solution;
 
 import OOP.Provided.OOPAssertionFailure;
+import OOP.Provided.OOPExceptionMismatchError;
 import OOP.Provided.OOPExpectedException;
 import OOP.Provided.OOPResult;
 import OOP.Provided.OOPResult.OOPTestResult;
@@ -29,7 +30,7 @@ public class OOPUnitCore {
         throw new OOPAssertionFailure();
     }
 
-    //TODO: should we merge the functions to get one overloaded function ??
+
     public static OOPTestSummary runClass(Class<?> testClass) throws IllegalArgumentException {
         if (testClass == null || !testClass.isAnnotationPresent(OOPTestClass.class) ) { //if not a TestClass or equals null -> throw exception
             throw new IllegalArgumentException();
@@ -37,10 +38,28 @@ public class OOPUnitCore {
 
         //map for storing the test results for each method
         Map<String, OOPResult> testMap = new HashMap<String, OOPResult>();
+        Object object=null; //class instance
 
         //TODO creating a new class instance - we need to apply those methods on this instance!
-        Constructor<?> cons = testClass.getConstructor(testClass.getClass());
-        Object object = cons.newInstance();
+        try{
+            Constructor<?> cons = testClass.getConstructor(testClass.getClass());
+            object = cons.newInstance();
+
+
+        } catch (Exception e){
+            //??
+        }
+
+        //getting the expected exception variable
+        OOPExpectedException expected = null;
+        Arrays.stream(testClass.getFields()).
+                filter(f -> f.isAnnotationPresent(OOPExceptionRule.class)).forEach(m -> {
+            try {
+                expected=(OOPExpectedException)m.get(object);
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        });
 
         List<Method> testMethods = new ArrayList<Method>(); //array list for testMethods!
 
@@ -54,67 +73,98 @@ public class OOPUnitCore {
                     forEach(a -> testMethods.add(a));
         }
 
-        //TODO: find Exception rules
+        //list of classes inheritance
+        List<Class> classList = new ArrayList<Class>();
+        Class currentClass = testClass.getClass();
+        while(currentClass != null){ //check maybe we got here more than needed
+            classList.add(currentClass);
+            currentClass = currentClass.getSuperclass();
+        }
+        Collections.reverse(classList); //from top to bottom
 
-        //run setup method - *also need to run for father and so on*
-        Arrays.stream(testClass.getMethods()).filter(m -> m.isAnnotationPresent(OOPSetup.class)).forEach(m -> {
-            try {
-                m.invoke(testClass); // calling the setup methods from testClass
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                e.printStackTrace();
-            }
-        });
+
+        //RUN SETUP METHODS - *also need to run for father and so on*
+        classList.forEach(c ->
+                Arrays.stream(c.getMethods()).filter(m -> m.isAnnotationPresent(OOPSetup.class)
+                        && m.getDeclaringClass() != c).forEach(m -> {
+                    try {
+                        m.invoke(object); // calling the setup methods from testClass
+                    } catch (IllegalAccessException | InvocationTargetException e) {
+                        e.printStackTrace();
+                    }
+                })
+        );
+
 
         //run OOPTest methods by order (if needed)
-        // TODO: apply order. Should probably add "sort()" to the stream
-        Arrays.stream(testClass.getMethods()).filter(method -> method.isAnnotationPresent(OOPTest.class)).forEach(testMethod -> { // run all OOPTest methods
-            try {
-                // run all "before" methods that are related to testMethod
-                Arrays.stream(testClass.getMethods()).filter(beforeMethod -> beforeMethod.isAnnotationPresent(OOPBefore.class) // beforeMethod contains the "OOPBefore" annotation
-                && Stream.of(beforeMethod.getAnnotation(OOPBefore.class).value()).anyMatch(methodName -> methodName.equals(testMethod.getName()))).forEach(beforeMethod -> { // beforeMethod contains "testMethod" in the "value" field
-                    try {
-                        beforeMethod.invoke(testClass);
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        //we should check what kind of exception we got here and compare it to ExpectedException if available
-                        e.printStackTrace();
-                    }
-                });
+        testMethods.forEach(testMethod -> { // run all OOPTest methods
+                    classList.stream().forEach(c ->
+                            Arrays.stream(c.getMethods()).filter(beforeMethod -> beforeMethod.isAnnotationPresent(OOPBefore.class) // beforeMethod contains the "OOPBefore" annotation
+                                    && Stream.of(beforeMethod.getAnnotation(OOPBefore.class).value()).
+                                    anyMatch(methodName -> methodName.equals(testMethod.getName()))).
+                                    forEach(beforeMethod -> {
+                                        try {
+                                            beforeMethod.invoke(testClass);
+                                        } catch (Exception e) {
+                                            testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, e.getClass().getName()));
+                                        }
+                                    })
+                    );
 
-                testMethod.invoke(testClass); // calling the test methods from testClass
-                // if we arrived here, no exception were thrown => SUCCESS
-                testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.SUCCESS, null));
+                try {
+                    //CALL THE TEST METHOD
+                    testMethod.invoke(object);
 
-                // run all "after" methods that are related to testMethod
-                Arrays.stream(testClass.getMethods()).filter(afterMethod -> afterMethod.isAnnotationPresent(OOPAfter.class) // afterMethod contains the "OOPBefore" annotation
-                        && Stream.of(afterMethod.getAnnotation(OOPAfter.class).value()).anyMatch(methodName -> methodName.equals(testMethod.getName()))).forEach(afterMethod -> { // afterMethod contains "testMethod" in the "value" field
-                    try {
-                        afterMethod.invoke(testClass);
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        e.printStackTrace();
+
+                    if(expected != null){
+                        testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, expected.getClass().getName()));
+                    }else{
+                        // if we arrived here, no exception were thrown => SUCCESS
+                        testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.SUCCESS, null));
                     }
-                });
-                // analyzing the test result
-                // TODO: add all cases of exceptions
-            } catch (Exception e) { // case of SUCCESS
-                if (OOPExpectedException.none().assertExpected(e)) { // case the exception thrown fit the expected
-                    testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.SUCCESS, null));
-                } else {
-                    testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.FAILURE, e.getMessage()));
+                }catch (Exception e) {
+                    //TODO
+                    if (expected.assertExpected(e)) { // case the exception thrown fit the expected
+                        testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.SUCCESS, null));
+                    } else { //NOT THE EXCEPTION WE EXPECTED
+                        if (e.equals(OOPAssertionFailure.class)) {
+                            testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.FAILURE, e.getMessage()));
+                        } else { //NOT A FAILURE EXCEPTION
+                            if(expected.getExpectedException().equals(e)){ //DONT HAVE THE SAME MESSAGE
+                                OOPExceptionMismatchError mismatch = new OOPExceptionMismatchError(expected.getExpectedException(),e.getClass());
+                                testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.EXPECTED_EXCEPTION_MISMATCH, mismatch.getMessage()));
+                            }
+                            if (expected == null) { //WE DIDN'T EXPECT TO GET AN EXCEPTION BUT WE GOT ONE
+                                testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, e.getClass().getName()));
+                            }
+                        }
+                    }
                 }
-            }
-        });
+
+                    // run all "AFTER METHODS" methods that are related to testMethod
+                    classList.stream().forEach(c ->
+                            Arrays.stream(c.getMethods()).filter(afterMethod -> afterMethod.isAnnotationPresent(OOPAfter.class) // beforeMethod contains the "OOPBefore" annotation
+                                    && Stream.of(afterMethod.getAnnotation(OOPAfter.class).value()).
+                                    anyMatch(methodName -> methodName.equals(testMethod.getName()))).
+                                    forEach(afterMethod -> {
+                                        try {
+                                            afterMethod.invoke(object);
+                                        } catch (Exception e) {
+                                            testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, e.getClass().getName()));
+                                        }
+                                    })
+                    );
+                });
         //put all the results in the testMap below
-
-
         //fill the map with the results
         OOPTestSummary testSummary = new OOPTestSummary(testMap);
         return testSummary;
     }
 
-
+//------------------------------------------------------------------------------------------------------------
     //main method for running the test methods according to the annotations tagging
     //TODO: fix according to the previous runClass()
-    OOPTestSummary runClass(Class<?> testClass, String tag) throws IllegalArgumentException {
+    public static OOPTestSummary runClass(Class<?> testClass, String tag) throws IllegalArgumentException {
         if (testClass == null || tag == null || !testClass.isAnnotationPresent(OOPTestClass.class) ){
             throw new IllegalArgumentException();
         }
