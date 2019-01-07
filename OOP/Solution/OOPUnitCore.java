@@ -156,13 +156,22 @@ public class OOPUnitCore {
 
 
     public static OOPTestSummary runClass(Class<?> testClass) throws IllegalArgumentException {
-        if (testClass == null || !testClass.isAnnotationPresent(OOPTestClass.class)) {
-            throw new IllegalArgumentException(); //if not a TestClass or equals null -> throw exception
+        String tag="";
+        return runClass(testClass, tag);
+    }
+
+
+
+
+//------------------------------------------------------------------------------------------------------------
+    //main method for running the test methods according to the annotations tagging
+    public static OOPTestSummary runClass(Class<?> testClass, String tag) throws IllegalArgumentException {
+        if (testClass == null || tag == null || !testClass.isAnnotationPresent(OOPTestClass.class) ){
+            throw new IllegalArgumentException();
         }
 
         //map for storing the test results for each method
         Map<String, OOPResult> testMap = new HashMap<String, OOPResult>();
-        String noTag="";
 
         Object object = null; //class instance
 
@@ -172,7 +181,7 @@ public class OOPUnitCore {
             Object finalObject = ((Class) object).newInstance();
             //getting the expected exception variable
             final OOPExpectedException expected = getExpected(testClass, finalObject);
-            List<Method> testMethods = getTestMethods(testClass,noTag);
+            List<Method> testMethods = getTestMethods(testClass,tag);
             //list of classes inheritance
             List<Class> classList = getClassList(testClass);
             Collections.reverse(classList); //from top to bottom
@@ -186,19 +195,5 @@ public class OOPUnitCore {
             //TODO what here?
         }
         return null;
-    }
-
-
-
-
-//------------------------------------------------------------------------------------------------------------
-    //main method for running the test methods according to the annotations tagging
-    //TODO: fix according to the previous runClass()
-    public static OOPTestSummary runClass(Class<?> testClass, String tag) throws IllegalArgumentException {
-        if (testClass == null || tag == null || !testClass.isAnnotationPresent(OOPTestClass.class) ){
-            throw new IllegalArgumentException();
-        }
-
-        return null; //TEMP
     }
 }
