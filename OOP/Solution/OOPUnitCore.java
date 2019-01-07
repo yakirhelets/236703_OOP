@@ -29,8 +29,8 @@ public class OOPUnitCore {
     public static void fail() throws OOPAssertionFailure { //throws OOPAssertionFauilure Exception
         throw new OOPAssertionFailure();
     }
-    //Helper Functions
 
+    //Helper Functions
     private static OOPExpectedException getExpected(Class<?> testClass, Object classInstance) {
         final OOPExpectedException[] expected = {null};
         Arrays.stream(testClass.getDeclaredFields()).
@@ -42,7 +42,7 @@ public class OOPUnitCore {
                 e.printStackTrace();
             }
         });
-        return expected[0];
+        return expected[0]; //NULL if nothing expected
     }
 
     private static List<Method> getTestMethods(Class<?> testClass,String tag){
@@ -64,8 +64,7 @@ public class OOPUnitCore {
     private static List<Class> getClassList(Class<?> testClass){
         List<Class> classList = new ArrayList<Class>();
         Class currentClass = testClass;
-//            System.out.println(currentClass.getName());
-        while (currentClass != Object.class) { //check maybe we got here more than needed
+        while (currentClass != Object.class) {
             classList.add(currentClass);
             currentClass = currentClass.getSuperclass();
         }
@@ -73,7 +72,7 @@ public class OOPUnitCore {
     }
 
     private static void runSetupMethods(List<Class> classList,Object classInstance){
-        //RUN SETUP METHODS - *also need to run for father and so on*
+        //RUN SETUP METHODS
         classList.forEach(c ->
                 Arrays.stream(c.getMethods()).filter(m -> m.isAnnotationPresent(OOPSetup.class)
                         && m.getDeclaringClass() != c).forEach(m -> {
@@ -85,10 +84,12 @@ public class OOPUnitCore {
                 })
         );
     }
+
+    //main function for running the BEFORE and the test method and AFTER for each *TEST method* - returns summary accord.
     private static OOPTestSummary runMethods(List<Class> classList,List<Method> testMethods,Object classInstance,Map<String, OOPResult> testMap,OOPExpectedException expected)
     {
         List<Class> classRevList = new ArrayList<>(classList);
-        Collections.reverse(classRevList); //from bottom to top! (for AFTER)
+        Collections.reverse(classRevList); //from bottom to top! (for AFTER methods)
 
         // run all BEFORE methods
         testMethods.forEach(testMethod -> {
@@ -149,7 +150,7 @@ public class OOPUnitCore {
                             })
             );
         });
-        //put all the results in the testMap below
+
         //fill the map with the results
         OOPTestSummary testSummary = new OOPTestSummary(testMap);
         return testSummary;
@@ -157,8 +158,8 @@ public class OOPUnitCore {
 
 
     public static OOPTestSummary runClass(Class<?> testClass) throws IllegalArgumentException {
-        if (testClass == null || !testClass.isAnnotationPresent(OOPTestClass.class)) { //if not a TestClass or equals null -> throw exception
-            throw new IllegalArgumentException();
+        if (testClass == null || !testClass.isAnnotationPresent(OOPTestClass.class)) {
+            throw new IllegalArgumentException(); //if not a TestClass or equals null -> throw exception
         }
 
         //map for storing the test results for each method
