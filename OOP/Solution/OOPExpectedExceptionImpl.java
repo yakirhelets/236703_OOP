@@ -62,8 +62,9 @@ public class OOPExpectedExceptionImpl implements OOPExpectedException {
         if (this.getExpectedException() == null) { // if we don't expect any exception
             return false;
         } else {
-            return (this.getExpectedException().equals(e.getClass()) &&
-                    e.getMessage().toLowerCase().contains(this.msg.toLowerCase()));
+            return (this.getExpectedException().isAssignableFrom(e.getClass())) && //handles inheritance&
+                    (e.getMessage() == null ?
+                            this.msg.toLowerCase().equals("") : e.getMessage().toLowerCase().contains(this.msg.toLowerCase()));
         }
     }
 
