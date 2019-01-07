@@ -15,6 +15,9 @@ public class OOPUnitCore {
     private OOPUnitCore(){} //private C'tor
 
     public static void assertEquals(Object expected, Object actual) throws OOPAssertionFailure {
+        if(expected == null && actual == null){
+            return;
+        }
         if(expected == null || actual == null ){
             throw new OOPAssertionFailure();
         }
@@ -97,8 +100,10 @@ public class OOPUnitCore {
                             anyMatch(methodName -> methodName.equals(testMethod.getName()))).
                             forEach(beforeMethod -> {
                                 try {
+                                    //backup fields
                                     beforeMethod.invoke(classInstance);
                                 } catch (Exception e) {
+                                    //restore backed up fields
                                     testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, e.getClass().getName()));
                                 }
                             })
@@ -134,6 +139,9 @@ public class OOPUnitCore {
                 //TODO what here?
             }
 
+            //reset expected for the next test
+            expected.expect(null).expectMessage("");
+
             // run all "AFTER METHODS" methods that are related to testMethod
             classRevList.stream().forEach(c ->
                     Arrays.stream(c.getMethods()).filter(afterMethod -> afterMethod.isAnnotationPresent(OOPAfter.class) // beforeMethod contains the "OOPBefore" annotation
@@ -141,8 +149,10 @@ public class OOPUnitCore {
                             anyMatch(methodName -> methodName.equals(testMethod.getName()))).
                             forEach(afterMethod -> {
                                 try {
+                                    //backup fields
                                     afterMethod.invoke(classInstance);
                                 } catch (Exception e) {
+                                    //restore backed up fields
                                     testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, e.getClass().getName()));
                                 }
                             })
@@ -190,7 +200,7 @@ public class OOPUnitCore {
             runSetupMethods(classList,finalObject);
 
             //RUN MAIN FUNCTION
-            return runMethods(classList,testMethods,finalObject,testMap,expected);
+            return runMethods(classList,testMethods,finalObject,testMap,expected); //TODO:maybe we need to add testClass var here for future field backups
         } catch (Exception e) {
             //TODO what here?
         }
