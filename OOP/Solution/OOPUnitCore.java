@@ -73,10 +73,11 @@ public class OOPUnitCore {
 
     private static void runSetupMethods(List<Class> classList,Object classInstance){
         //RUN SETUP METHODS
-        classList.forEach(c ->
-                Arrays.stream(c.getMethods()).filter(m -> m.isAnnotationPresent(OOPSetup.class)
-                        && ( m.getDeclaringClass() != c || //SETUP overriden
-                        Arrays.stream(c.getDeclaredMethods()).anyMatch(func -> func.equals(m))) )
+        Class setupClass =classList.get(classList.size()-1);
+//        classList.forEach(c ->
+                Arrays.stream(setupClass.getMethods()).filter(m -> m.isAnnotationPresent(OOPSetup.class)
+                        && ( m.getDeclaringClass() != setupClass || //SETUP overriden
+                        Arrays.stream(setupClass.getDeclaredMethods()).anyMatch(func -> func.equals(m))) )
                         .forEach(m -> {
                     try {
                         m.invoke(classInstance); // calling the setup methods from testClass
@@ -84,7 +85,7 @@ public class OOPUnitCore {
                         e.printStackTrace();
                     }
                 })
-        );
+        ;
     }
     //TODO finish and check this func
     private static void backupFields(Object original,Object fieldsBackup){

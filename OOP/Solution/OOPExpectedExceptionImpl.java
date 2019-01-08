@@ -59,6 +59,9 @@ public class OOPExpectedExceptionImpl implements OOPExpectedException {
      */
     @Override
     public boolean assertExpected(Exception e) {
+        if (e == null && this.getExpectedException() != null) {
+            return false;
+        }
         if (this.getExpectedException() == null) { // if we don't expect any exception
             return false;
         } else {
