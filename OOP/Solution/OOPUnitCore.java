@@ -130,6 +130,13 @@ public class OOPUnitCore {
         return null;
     }
 
+    private static void initExpected(OOPExpectedException expected){
+        //reset expected for the next test
+        if(expected != null) {
+            expected.expect(null).expectMessage("");
+        }
+    }
+
     //main function for running the BEFORE and the test method and AFTER for each *TEST method* - returns summary accord.
     private static OOPTestSummary runMethods(List<Class> classList,List<Method> testMethods,Object classInstance,Map<String, OOPResult> testMap,OOPExpectedException expected) throws IllegalAccessException, InstantiationException {
         List<Class> classRevList = new ArrayList<>(classList);
@@ -152,62 +159,68 @@ public class OOPUnitCore {
                                     //restore backed up fields
                                     backupFields(backupInstance,classInstance);
                                     testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, e.getClass().getName()));
+                                    //initExpected(expected); //TODO do we need it here in case?
                                 }
                             })
             );
+            //no error accured during the BEFORE methods => continue
+            if(!(testMap.get(testMethod.getName()) != null && testMap.get(testMethod.getName()).getResultType().equals(OOPTestResult.ERROR))) {
 
-            try {
-                //CALL THE TEST METHOD
-                testMethod.invoke(classInstance);
+                try {
+                    //CALL THE TEST METHOD
+                    testMethod.invoke(classInstance);
 
-                if (expected != null && expected.getExpectedException() != null) { // WE EXPECTED AN EXCEPTION BUT DIDN'T GET ANY
-                    testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, expected.getClass().getName()));
-                } else { // if we arrived here, no exception were thrown => SUCCESS
-                    testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.SUCCESS, null));
-                }
-            }
-            //TODO: check the logic here
-            catch (InvocationTargetException e) {
-                if (expected == null) { //WE DIDN'T EXPECT TO GET AN EXCEPTION BUT WE GOT ONE
-                    testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, e.getCause().getClass().getName()));
-                }else { //WE DID EXPECT AN EXCEPTION
-                    if(e.getCause().getClass().equals(OOPAssertionFailure.class)){ //ASSERTION FAILURE
-                        testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.FAILURE, e.getCause().getMessage()));
-                    }
-                    else if (expected.assertExpected((Exception)e.getCause())) { // case the exception thrown fit the expected
+                    if (expected != null && expected.getExpectedException() != null) { // WE EXPECTED AN EXCEPTION BUT DIDN'T GET ANY
+                        testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, expected.getClass().getName()));
+                    } else { // if we arrived here, no exception were thrown => SUCCESS
                         testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.SUCCESS, null));
                     }
-                    else if (expected.getExpectedException().equals(e.getCause().getClass())) { //DONT HAVE THE SAME MESSAGE
-                        OOPExceptionMismatchError mismatch = new OOPExceptionMismatchError(expected.getExpectedException(), e.getClass()); //TODO change!
-                        testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.EXPECTED_EXCEPTION_MISMATCH, mismatch.getMessage()));
-                    }
                 }
-            } catch (Exception e) {
-                //TODO what here?
-            }
+                //TODO: check the logic here
+                catch (InvocationTargetException e) {
+                    if (expected == null) { //WE DIDN'T EXPECT TO GET AN EXCEPTION BUT WE GOT ONE
+                        if (e.getCause().getClass().equals(OOPAssertionFailure.class)) {
+                            testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.FAILURE, e.getCause().getMessage()));
+                        } else {
+                            testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, e.getCause().getClass().getName()));
+                        }
+                    } else { //WE DID EXPECT AN EXCEPTION
+                        if (e.getCause().getClass().equals(OOPAssertionFailure.class)) { //ASSERTION FAILURE
+                            testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.FAILURE, e.getCause().getMessage()));
+                        } else if (expected.assertExpected((Exception) e.getCause())) { // case the exception thrown fit the expected
+                            testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.SUCCESS, null));
+                        } else if (expected.getExpectedException().equals(e.getCause().getClass()) ||
+                                !expected.getExpectedException().equals(e.getCause().getClass())) {
+                            //DONT HAVE THE SAME MESSAGE or WE GOT DIFFERENT EXCEPTION THAN EXPECTED
+                            OOPExceptionMismatchError mismatch = new OOPExceptionMismatchError(expected.getExpectedException(), e.getClass()); //TODO change!
+                            testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.EXPECTED_EXCEPTION_MISMATCH, mismatch.getMessage()));
+                        }
+                    }
+                } catch (Exception e) {
+                    //TODO what here?
+                }
 
-            //reset expected for the next test
-            if(expected != null) {
-                expected.expect(null).expectMessage("");
-            }
+                //reset expected for the next test
+                initExpected(expected);
 
-            // run all "AFTER METHODS" methods that are related to testMethod
-            classRevList.stream().forEach(c ->
-                    Arrays.stream(c.getMethods()).filter(afterMethod -> afterMethod.isAnnotationPresent(OOPAfter.class) // beforeMethod contains the "OOPBefore" annotation
-                            && Stream.of(afterMethod.getAnnotation(OOPAfter.class).value()).
-                            anyMatch(methodName -> methodName.equals(testMethod.getName()))).
-                            forEach(afterMethod -> {
-                                try {
-                                    //backup fields
-                                    backupFields(classInstance,backupInstance);
-                                    afterMethod.invoke(classInstance);
-                                } catch (Exception e) {
-                                    //restore backed up fields
-                                    backupFields(backupInstance,classInstance);
-                                    testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, e.getClass().getName()));
-                                }
-                            })
-            );
+                // run all "AFTER METHODS" methods that are related to testMethod
+                classRevList.stream().forEach(c ->
+                        Arrays.stream(c.getMethods()).filter(afterMethod -> afterMethod.isAnnotationPresent(OOPAfter.class) // beforeMethod contains the "OOPBefore" annotation
+                                && Stream.of(afterMethod.getAnnotation(OOPAfter.class).value()).
+                                anyMatch(methodName -> methodName.equals(testMethod.getName()))).
+                                forEach(afterMethod -> {
+                                    try {
+                                        //backup fields
+                                        backupFields(classInstance, backupInstance);
+                                        afterMethod.invoke(classInstance);
+                                    } catch (Exception e) {
+                                        //restore backed up fields
+                                        backupFields(backupInstance, classInstance);
+                                        testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, e.getClass().getName()));
+                                    }
+                                })
+                );
+            }
         });
 
         //fill the map with the results
