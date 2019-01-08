@@ -84,28 +84,28 @@ public class OOPUnitCore {
                 })
         );
     }
-
+    //TODO finish and check this func
     private static void backupFields(Object original,Object fieldsBackup){
-        Field[] fields = original.getClass().getDeclaredFields();
+        Field[] fields = original.getClass().getDeclaredFields(); //get all test class fields
         for (Field field : fields) {
             try {
                 Field fieldFrom = original.getClass().getDeclaredField(field.getName());
                 fieldFrom.setAccessible(true);
                 Object value = fieldFrom.get(original); //getting the original field value
-                Object valueTo;
+                Object valueTo=null; //initialization
                 if(value instanceof Cloneable) { //check if cloneable
                     valueTo = value.getClass().getMethod("clone").invoke(value);
-                    //Object valueTo = value.clone();
-                    Field fieldTo = fieldsBackup.getClass().getDeclaredField(field.getName());
-                    fieldTo.setAccessible(true);
-                    fieldTo.set(fieldsBackup, valueTo);
-                } else if(hasCopyCons(value)){ //check if has a copy cons
-                    //call copy cons
+                } else if(getCopyCons(value) != null){ //check if has a copy cons
+                    Constructor<?> copyCons = getCopyCons(value); //get the copy cons
+                    valueTo = copyCons.newInstance(value);
+
                 } else{ //basic copy
-                    Field fieldTo = fieldsBackup.getClass().getDeclaredField(field.getName());
-                    fieldTo.setAccessible(true);
-                    fieldTo.set(fieldsBackup, value);
+                    valueTo = fieldFrom.get(original);
                 }
+                //common behavior for all cases = just put the copied value in its new place
+                Field fieldTo = fieldsBackup.getClass().getDeclaredField(field.getName());
+                fieldTo.setAccessible(true);
+                fieldTo.set(fieldsBackup, valueTo);
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             } catch (NoSuchFieldException e) {
@@ -114,18 +114,20 @@ public class OOPUnitCore {
                 e.printStackTrace();
             } catch (InvocationTargetException e) {
                 e.printStackTrace();
+            } catch (InstantiationException e) {
+                e.printStackTrace();
             }
         }
     }
         //check this function
-    private static boolean hasCopyCons(Object obj){
+    private static Constructor<?> getCopyCons(Object obj){
         for (Constructor<?> constructor : obj.getClass().getConstructors()) {
             Type[] parameterTypes = constructor.getGenericParameterTypes();
             if (parameterTypes.length == 1 && parameterTypes[0].equals(obj.getClass())) {
-                return true;
+                return constructor;
             }
         }
-        return false;
+        return null;
     }
 
     //main function for running the BEFORE and the test method and AFTER for each *TEST method* - returns summary accord.
@@ -185,7 +187,9 @@ public class OOPUnitCore {
             }
 
             //reset expected for the next test
-            expected.expect(null).expectMessage("");
+            if(expected != null) {
+                expected.expect(null).expectMessage("");
+            }
 
             // run all "AFTER METHODS" methods that are related to testMethod
             classRevList.stream().forEach(c ->
@@ -195,9 +199,11 @@ public class OOPUnitCore {
                             forEach(afterMethod -> {
                                 try {
                                     //backup fields
+                                    backupFields(classInstance,backupInstance);
                                     afterMethod.invoke(classInstance);
                                 } catch (Exception e) {
                                     //restore backed up fields
+                                    backupFields(backupInstance,classInstance);
                                     testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, e.getClass().getName()));
                                 }
                             })
