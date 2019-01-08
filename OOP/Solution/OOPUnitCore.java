@@ -144,6 +144,9 @@ public class OOPUnitCore {
     private static OOPTestSummary runMethods(List<Class> classList,List<Method> testMethods,Object classInstance,Map<String, OOPResult> testMap,OOPExpectedException expected) throws IllegalAccessException, InstantiationException, InvocationTargetException {
         List<Class> classRevList = new ArrayList<>(classList);
         Collections.reverse(classRevList); //from bottom to top! (for AFTER methods)
+        List<Class> classRevList1 = new ArrayList<>();
+        classRevList1.add(classRevList.get(0));
+
 
         //another object for backup class fields
         Constructor<?> constructor= classInstance.getClass().getDeclaredConstructors()[0];
@@ -153,11 +156,14 @@ public class OOPUnitCore {
 
         // run all BEFORE methods
         testMethods.forEach(testMethod -> {
-            classList.stream().forEach(c ->
-                    Arrays.stream(c.getMethods()).filter(beforeMethod -> beforeMethod.isAnnotationPresent(OOPBefore.class) // beforeMethod contains the "OOPBefore" annotation
+            Class beforeClass =classList.get(classList.size()-1);
+            //classList.stream().forEach(c ->
+                    Arrays.stream(beforeClass.getMethods()).filter(beforeMethod -> beforeMethod.isAnnotationPresent(OOPBefore.class) // beforeMethod contains the "OOPBefore" annotation
                             && Stream.of(beforeMethod.getAnnotation(OOPBefore.class).value()).
-                            anyMatch(methodName -> methodName.equals(testMethod.getName()))).
-                            forEach(beforeMethod -> {
+                            anyMatch(methodName -> methodName.equals(testMethod.getName()))
+                                && ( beforeMethod.getDeclaringClass() != beforeClass || //BEFORE overriden
+                                Arrays.stream(beforeClass.getDeclaredMethods()).anyMatch(func -> func.equals(beforeMethod)))
+                            ).forEach(beforeMethod -> {
                                 try {
                                     //backup fields
                                     backupFields(classInstance,backupInstance);
@@ -169,7 +175,7 @@ public class OOPUnitCore {
                                     //initExpected(expected); //TODO do we need it here in case?
                                 }
                             })
-            );
+            ;
             //no error accured during the BEFORE methods => continue
             if(!(testMap.get(testMethod.getName()) != null && testMap.get(testMethod.getName()).getResultType().equals(OOPTestResult.ERROR))) {
 
@@ -211,7 +217,7 @@ public class OOPUnitCore {
                 initExpected(expected);
 
                 // run all "AFTER METHODS" methods that are related to testMethod
-                classRevList.stream().forEach(c ->
+                classRevList1.stream().forEach(c ->
                         Arrays.stream(c.getMethods()).filter(afterMethod -> afterMethod.isAnnotationPresent(OOPAfter.class) // beforeMethod contains the "OOPBefore" annotation
                                 && Stream.of(afterMethod.getAnnotation(OOPAfter.class).value()).
                                 anyMatch(methodName -> methodName.equals(testMethod.getName()))).
