@@ -75,7 +75,9 @@ public class OOPUnitCore {
         //RUN SETUP METHODS
         classList.forEach(c ->
                 Arrays.stream(c.getMethods()).filter(m -> m.isAnnotationPresent(OOPSetup.class)
-                        && m.getDeclaringClass() != c).forEach(m -> {
+                        && ( m.getDeclaringClass() != c || //SETUP overriden
+                        Arrays.stream(c.getDeclaredMethods()).anyMatch(func -> func.equals(m))) )
+                        .forEach(m -> {
                     try {
                         m.invoke(classInstance); // calling the setup methods from testClass
                     } catch (IllegalAccessException | InvocationTargetException e) {
@@ -97,6 +99,7 @@ public class OOPUnitCore {
                     valueTo = value.getClass().getMethod("clone").invoke(value);
                 } else if(getCopyCons(value) != null){ //check if has a copy cons
                     Constructor<?> copyCons = getCopyCons(value); //get the copy cons
+                    copyCons.setAccessible(true);
                     valueTo = copyCons.newInstance(value);
 
                 } else{ //basic copy
@@ -138,11 +141,15 @@ public class OOPUnitCore {
     }
 
     //main function for running the BEFORE and the test method and AFTER for each *TEST method* - returns summary accord.
-    private static OOPTestSummary runMethods(List<Class> classList,List<Method> testMethods,Object classInstance,Map<String, OOPResult> testMap,OOPExpectedException expected) throws IllegalAccessException, InstantiationException {
+    private static OOPTestSummary runMethods(List<Class> classList,List<Method> testMethods,Object classInstance,Map<String, OOPResult> testMap,OOPExpectedException expected) throws IllegalAccessException, InstantiationException, InvocationTargetException {
         List<Class> classRevList = new ArrayList<>(classList);
         Collections.reverse(classRevList); //from bottom to top! (for AFTER methods)
+
         //another object for backup class fields
-        Object backupInstance = classInstance.getClass().newInstance();
+        Constructor<?> constructor= classInstance.getClass().getDeclaredConstructors()[0];
+        constructor.setAccessible(true);
+        Object backupInstance = constructor.newInstance();
+        //Object backupInstance = classInstance.getClass().newInstance();
 
         // run all BEFORE methods
         testMethods.forEach(testMethod -> {
@@ -252,7 +259,11 @@ public class OOPUnitCore {
         try {
             object = testClass;
             //making a class instance
-            Object finalObject = ((Class) object).newInstance();
+            Constructor<?> constructor= testClass.getDeclaredConstructors()[0];
+            constructor.setAccessible(true);
+            Object finalObject = constructor.newInstance();
+            //Object finalObject = ((Class) object).newInstance(testClass);
+
             //getting the expected exception variable
             final OOPExpectedException expected = getExpected(testClass, finalObject);
             List<Method> testMethods = getTestMethods(testClass,tag);
