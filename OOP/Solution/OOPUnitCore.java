@@ -6,8 +6,7 @@ import OOP.Provided.OOPExpectedException;
 import OOP.Provided.OOPResult;
 import OOP.Provided.OOPResult.OOPTestResult;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -86,11 +85,55 @@ public class OOPUnitCore {
         );
     }
 
+    private static void backupFields(Object original,Object fieldsBackup){
+        Field[] fields = original.getClass().getDeclaredFields();
+        for (Field field : fields) {
+            try {
+                Field fieldFrom = original.getClass().getDeclaredField(field.getName());
+                fieldFrom.setAccessible(true);
+                Object value = fieldFrom.get(original); //getting the original field value
+                Object valueTo;
+                if(value instanceof Cloneable) { //check if cloneable
+                    valueTo = value.getClass().getMethod("clone").invoke(value);
+                    //Object valueTo = value.clone();
+                    Field fieldTo = fieldsBackup.getClass().getDeclaredField(field.getName());
+                    fieldTo.setAccessible(true);
+                    fieldTo.set(fieldsBackup, valueTo);
+                } else if(hasCopyCons(value)){ //check if has a copy cons
+                    //call copy cons
+                } else{ //basic copy
+                    Field fieldTo = fieldsBackup.getClass().getDeclaredField(field.getName());
+                    fieldTo.setAccessible(true);
+                    fieldTo.set(fieldsBackup, value);
+                }
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (NoSuchFieldException e) {
+                e.printStackTrace();
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+        //check this function
+    private static boolean hasCopyCons(Object obj){
+        for (Constructor<?> constructor : obj.getClass().getConstructors()) {
+            Type[] parameterTypes = constructor.getGenericParameterTypes();
+            if (parameterTypes.length == 1 && parameterTypes[0].equals(obj.getClass())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     //main function for running the BEFORE and the test method and AFTER for each *TEST method* - returns summary accord.
-    private static OOPTestSummary runMethods(List<Class> classList,List<Method> testMethods,Object classInstance,Map<String, OOPResult> testMap,OOPExpectedException expected)
-    {
+    private static OOPTestSummary runMethods(List<Class> classList,List<Method> testMethods,Object classInstance,Map<String, OOPResult> testMap,OOPExpectedException expected) throws IllegalAccessException, InstantiationException {
         List<Class> classRevList = new ArrayList<>(classList);
         Collections.reverse(classRevList); //from bottom to top! (for AFTER methods)
+        //another object for backup class fields
+        Object backupInstance = classInstance.getClass().newInstance();
 
         // run all BEFORE methods
         testMethods.forEach(testMethod -> {
@@ -101,9 +144,11 @@ public class OOPUnitCore {
                             forEach(beforeMethod -> {
                                 try {
                                     //backup fields
+                                    backupFields(classInstance,backupInstance);
                                     beforeMethod.invoke(classInstance);
                                 } catch (Exception e) {
                                     //restore backed up fields
+                                    backupFields(backupInstance,classInstance);
                                     testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, e.getClass().getName()));
                                 }
                             })
@@ -200,7 +245,7 @@ public class OOPUnitCore {
             runSetupMethods(classList,finalObject);
 
             //RUN MAIN FUNCTION
-            return runMethods(classList,testMethods,finalObject,testMap,expected); //TODO:maybe we need to add testClass var here for future field backups
+            return runMethods(classList,testMethods,finalObject,testMap,expected);
         } catch (Exception e) {
             //TODO what here?
         }
