@@ -47,15 +47,16 @@ public class OOPUnitCore {
 
     private static List<Method> getTestMethods(Class<?> testClass,String tag){
         List<Method> testMethods = new ArrayList<Method>();
+        String emptyTag="";
         //check if class has ordered annotation and testClass annotation.
         if (testClass.getAnnotation(OOPTestClass.class).value() == OOPTestClass.OOPTestClassType.ORDERED) {
             Arrays.stream(testClass.getMethods()).filter(m -> m.isAnnotationPresent(OOPTest.class) &&
-                    m.getAnnotation(OOPTest.class).tag().equals(tag)).
+                    (tag.equals(emptyTag) || m.getAnnotation(OOPTest.class).tag().equals(tag))).
                     sorted(Comparator.comparingInt(a -> a.getAnnotation(OOPTest.class).order())).
                     forEach(a -> testMethods.add(a)); //take the lowest order first
         } else { //UNORDERED
             Arrays.stream(testClass.getMethods()).filter(m -> m.isAnnotationPresent(OOPTest.class) &&
-                    m.getAnnotation(OOPTest.class).tag().equals(tag)).
+                    (tag.equals(emptyTag) || m.getAnnotation(OOPTest.class).tag().equals(tag))).
                     forEach(a -> testMethods.add(a));
         }
         return testMethods;
