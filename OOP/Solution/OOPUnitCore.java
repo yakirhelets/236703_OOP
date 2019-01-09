@@ -6,6 +6,7 @@ import OOP.Provided.OOPExpectedException;
 import OOP.Provided.OOPResult;
 import OOP.Provided.OOPResult.OOPTestResult;
 
+import javax.swing.plaf.metal.MetalToggleButtonUI;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.stream.Stream;
@@ -20,13 +21,12 @@ public class OOPUnitCore {
         if(expected == null || actual == null ){
             throw new OOPAssertionFailure();
         }
-        //should we check if they both got the same class?
         if(!expected.equals(actual)){
             throw new OOPAssertionFailure();
         }
     }
 
-    public static void fail() throws OOPAssertionFailure { //throws OOPAssertionFauilure Exception
+    public static void fail() throws OOPAssertionFailure {
         throw new OOPAssertionFailure();
     }
 
@@ -45,9 +45,10 @@ public class OOPUnitCore {
         return expected[0]; //NULL if nothing expected
     }
 
+    //getting all the test methods from all the related classes
     private static List<Method> getTestMethods(Class<?> testClass,String tag){
         List<Method> testMethods = new ArrayList<Method>();
-        String emptyTag="";
+        String emptyTag=""; //in case we don't have restriction on the method tag
         //check if class has ordered annotation and testClass annotation.
         if (testClass.getAnnotation(OOPTestClass.class).value() == OOPTestClass.OOPTestClassType.ORDERED) {
             Arrays.stream(testClass.getMethods()).filter(m -> m.isAnnotationPresent(OOPTest.class) &&
@@ -62,6 +63,7 @@ public class OOPUnitCore {
         return testMethods;
     }
 
+    //getting all of the given class inheritance tree of classes
     private static List<Class> getClassList(Class<?> testClass){
         List<Class> classList = new ArrayList<Class>();
         Class currentClass = testClass;
@@ -89,7 +91,7 @@ public class OOPUnitCore {
                 })
         ;
     }
-    //TODO finish and check this func
+
     private static void backupFields(Object original,Object fieldsBackup){
         Field[] fields = original.getClass().getDeclaredFields(); //get all test class fields
         for (Field field : fields) {
@@ -112,20 +114,12 @@ public class OOPUnitCore {
                 Field fieldTo = fieldsBackup.getClass().getDeclaredField(field.getName());
                 fieldTo.setAccessible(true);
                 fieldTo.set(fieldsBackup, valueTo);
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (NoSuchFieldException e) {
-                e.printStackTrace();
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
-            } catch (InstantiationException e) {
-                e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace(); //TODO check here
             }
         }
     }
-        //check this function
+
     private static Constructor<?> getCopyCons(Object obj){
         for (Constructor<?> constructor : obj.getClass().getConstructors()) {
             Type[] parameterTypes = constructor.getGenericParameterTypes();
@@ -143,58 +137,77 @@ public class OOPUnitCore {
         }
     }
 
-    //main function for running the BEFORE and the test method and AFTER for each *TEST method* - returns summary accord.
+    private static void runBeforeMethos(Method testMethod,Class beforeClass,Map<String, OOPResult> testMap,Object classInstance,Object backupInstance){
+        List<Method> beforeClassMethods = Arrays.asList(beforeClass.getMethods());
+        Collections.reverse(beforeClassMethods);
+        beforeClassMethods.stream().filter(beforeMethod -> beforeMethod.isAnnotationPresent(OOPBefore.class) // beforeMethod contains the "OOPBefore" annotation
+                && Stream.of(beforeMethod.getAnnotation(OOPBefore.class).value()).
+                anyMatch(methodName -> methodName.equals(testMethod.getName()))
+                && ( beforeMethod.getDeclaringClass() != beforeClass || //BEFORE overriden
+                Arrays.stream(beforeClass.getDeclaredMethods()).anyMatch(func -> func.equals(beforeMethod)))
+        ).forEach(beforeMethod -> {
+            backupAndInvoke(testMethod,beforeMethod,classInstance,backupInstance,testMap);
+        });
+    }
+
+    private static void runAfterMethos(Method testMethod,Class afterClass,Map<String, OOPResult> testMap,Object classInstance,Object backupInstance) {
+        Arrays.stream(afterClass.getMethods()).filter(afterMethod -> afterMethod.isAnnotationPresent(OOPAfter.class) // beforeMethod contains the "OOPBefore" annotation
+                && Stream.of(afterMethod.getAnnotation(OOPAfter.class).value()).
+                anyMatch(methodName -> methodName.equals(testMethod.getName()))).
+                forEach(afterMethod -> {
+                    backupAndInvoke(testMethod,afterMethod,classInstance,backupInstance,testMap);
+                });
+    }
+
+    //backup class field and invoke the given function, if we got an error -> restore the fields and put ERROR in the result map
+    private static void backupAndInvoke(Method testMethod,Method methodToInvoke,Object classInstance,Object backupInstance,Map<String, OOPResult> testMap){
+        try {
+            //backup fields
+            backupFields(classInstance, backupInstance);
+            methodToInvoke.invoke(classInstance);
+        } catch (Exception e) {
+            //restore backed up fields
+            backupFields(backupInstance, classInstance);
+            testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, e.getClass().getName()));
+        }
+    }
+
+
+
+        //main function for running the BEFORE and the test method and AFTER for each *TEST method* - returns summary accord.
     private static OOPTestSummary runMethods(List<Class> classList,List<Method> testMethods,Object classInstance,Map<String, OOPResult> testMap,OOPExpectedException expected) throws IllegalAccessException, InstantiationException, InvocationTargetException {
         List<Class> classRevList = new ArrayList<>(classList);
         Collections.reverse(classRevList); //from bottom to top! (for AFTER methods)
-        List<Class> classRevList1 = new ArrayList<>();
-        classRevList1.add(classRevList.get(0));
-
+        Class afterClass = classRevList.get(0);
 
         //another object for backup class fields
         Constructor<?> constructor= classInstance.getClass().getDeclaredConstructors()[0];
         constructor.setAccessible(true);
         Object backupInstance = constructor.newInstance();
         //Object backupInstance = classInstance.getClass().newInstance();
+        Class beforeClass =classList.get(classList.size()-1);
 
-        // run all BEFORE methods
+        //for each TEST METHOD DO:
         testMethods.forEach(testMethod -> {
-            Class beforeClass =classList.get(classList.size()-1);
-            List<Method> beforeClassMethods = Arrays.asList(beforeClass.getMethods());
-            Collections.reverse(beforeClassMethods);
-            //classList.stream().forEach(c ->
-                    beforeClassMethods.stream().filter(beforeMethod -> beforeMethod.isAnnotationPresent(OOPBefore.class) // beforeMethod contains the "OOPBefore" annotation
-                            && Stream.of(beforeMethod.getAnnotation(OOPBefore.class).value()).
-                            anyMatch(methodName -> methodName.equals(testMethod.getName()))
-                                && ( beforeMethod.getDeclaringClass() != beforeClass || //BEFORE overriden
-                                Arrays.stream(beforeClass.getDeclaredMethods()).anyMatch(func -> func.equals(beforeMethod)))
-                            ).forEach(beforeMethod -> {
-                                try {
-                                    //backup fields
-                                    backupFields(classInstance,backupInstance);
-                                    beforeMethod.invoke(classInstance);
-                                } catch (Exception e) {
-                                    //restore backed up fields
-                                    backupFields(backupInstance,classInstance);
-                                    testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, e.getClass().getName()));
-                                    //initExpected(expected); //TODO do we need it here in case?
-                                }
-                            })
-            ;
-            //no error accured during the BEFORE methods => continue
+
+            // run all BEFORE methods
+            runBeforeMethos(testMethod,beforeClass,testMap,classInstance,backupInstance);
+
+            //no error accrued during the BEFORE methods => continue
             if(!(testMap.get(testMethod.getName()) != null && testMap.get(testMethod.getName()).getResultType().equals(OOPTestResult.ERROR))) {
 
                 try {
                     //CALL THE TEST METHOD
                     testMethod.invoke(classInstance);
 
+                    //no exception was thrown ->
                     if (expected != null && expected.getExpectedException() != null) { // WE EXPECTED AN EXCEPTION BUT DIDN'T GET ANY
                         testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, expected.getClass().getName()));
                     } else { // if we arrived here, no exception were thrown => SUCCESS
                         testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.SUCCESS, null));
                     }
                 }
-                //TODO: check the logic here
+                //exception *was* thrown ->
                 catch (InvocationTargetException e) {
                     if (expected == null) { //WE DIDN'T EXPECT TO GET AN EXCEPTION BUT WE GOT ONE
                         if (e.getCause().getClass().equals(OOPAssertionFailure.class)) {
@@ -218,26 +231,12 @@ public class OOPUnitCore {
                     //TODO what here?
                 }
 
-                //reset expected for the next test
+                //reset expected value for the next test
                 initExpected(expected);
 
-                // run all "AFTER METHODS" methods that are related to testMethod
-                classRevList1.stream().forEach(c ->
-                        Arrays.stream(c.getMethods()).filter(afterMethod -> afterMethod.isAnnotationPresent(OOPAfter.class) // beforeMethod contains the "OOPBefore" annotation
-                                && Stream.of(afterMethod.getAnnotation(OOPAfter.class).value()).
-                                anyMatch(methodName -> methodName.equals(testMethod.getName()))).
-                                forEach(afterMethod -> {
-                                    try {
-                                        //backup fields
-                                        backupFields(classInstance, backupInstance);
-                                        afterMethod.invoke(classInstance);
-                                    } catch (Exception e) {
-                                        //restore backed up fields
-                                        backupFields(backupInstance, classInstance);
-                                        testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, e.getClass().getName()));
-                                    }
-                                })
-                );
+                // run all "AFTER METHODS" that are related to testMethod
+                runAfterMethos(testMethod,afterClass,testMap,classInstance,backupInstance);
+
             }
         });
 
@@ -246,16 +245,12 @@ public class OOPUnitCore {
         return testSummary;
     }
 
-
     public static OOPTestSummary runClass(Class<?> testClass) throws IllegalArgumentException {
         String tag="";
         return runClass(testClass, tag);
     }
 
 
-
-
-//------------------------------------------------------------------------------------------------------------
     //main method for running the test methods according to the annotations tagging
     public static OOPTestSummary runClass(Class<?> testClass, String tag) throws IllegalArgumentException {
         if (testClass == null || tag == null || !testClass.isAnnotationPresent(OOPTestClass.class) ){
@@ -269,11 +264,11 @@ public class OOPUnitCore {
 
         try {
             object = testClass;
+
             //making a class instance
             Constructor<?> constructor= testClass.getDeclaredConstructors()[0];
             constructor.setAccessible(true);
             Object finalObject = constructor.newInstance();
-            //Object finalObject = ((Class) object).newInstance(testClass);
 
             //getting the expected exception variable
             final OOPExpectedException expected = getExpected(testClass, finalObject);
@@ -287,6 +282,7 @@ public class OOPUnitCore {
 
             //RUN MAIN FUNCTION
             return runMethods(classList,testMethods,finalObject,testMap,expected);
+
         } catch (Exception e) {
             //TODO what here?
         }
