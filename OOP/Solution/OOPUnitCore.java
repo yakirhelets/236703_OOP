@@ -74,8 +74,9 @@ public class OOPUnitCore {
     private static void runSetupMethods(List<Class> classList,Object classInstance){
         //RUN SETUP METHODS
         Class setupClass =classList.get(classList.size()-1);
-//        classList.forEach(c ->
-                Arrays.stream(setupClass.getMethods()).filter(m -> m.isAnnotationPresent(OOPSetup.class)
+        List<Method> setupClassMethods = Arrays.asList(setupClass.getMethods());
+        Collections.reverse(setupClassMethods);
+        setupClassMethods.stream().filter(m -> m.isAnnotationPresent(OOPSetup.class)
                         && ( m.getDeclaringClass() != setupClass || //SETUP overriden
                         Arrays.stream(setupClass.getDeclaredMethods()).anyMatch(func -> func.equals(m))) )
                         .forEach(m -> {
@@ -158,8 +159,10 @@ public class OOPUnitCore {
         // run all BEFORE methods
         testMethods.forEach(testMethod -> {
             Class beforeClass =classList.get(classList.size()-1);
+            List<Method> beforeClassMethods = Arrays.asList(beforeClass.getMethods());
+            Collections.reverse(beforeClassMethods);
             //classList.stream().forEach(c ->
-                    Arrays.stream(beforeClass.getMethods()).filter(beforeMethod -> beforeMethod.isAnnotationPresent(OOPBefore.class) // beforeMethod contains the "OOPBefore" annotation
+                    beforeClassMethods.stream().filter(beforeMethod -> beforeMethod.isAnnotationPresent(OOPBefore.class) // beforeMethod contains the "OOPBefore" annotation
                             && Stream.of(beforeMethod.getAnnotation(OOPBefore.class).value()).
                             anyMatch(methodName -> methodName.equals(testMethod.getName()))
                                 && ( beforeMethod.getDeclaringClass() != beforeClass || //BEFORE overriden
