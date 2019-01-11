@@ -34,7 +34,7 @@ public class OOPResultImpl implements OOPResult {
      */
     @Override
     public boolean equals(Object obj) {
-        if (obj.getClass() != OOPResultImpl.class) {
+        if (obj == null || obj.getClass() != OOPResultImpl.class) {
             return false;
         }
         if (((this.getMessage() == null && ((OOPResultImpl)obj).getMessage() == null) //both are null

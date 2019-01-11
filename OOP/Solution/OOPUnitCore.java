@@ -130,7 +130,9 @@ public class OOPUnitCore {
         return null;
     }
 
-    private static void initExpected(OOPExpectedException expected){
+    private static void initExpected(Object classInstance){
+        //getting the expected exception variable
+        OOPExpectedException expected = getExpected(classInstance.getClass(), classInstance);
         //reset expected for the next test
         if(expected != null) {
             expected.expect(null).expectMessage("");
@@ -175,7 +177,7 @@ public class OOPUnitCore {
 
 
         //main function for running the BEFORE and the test method and AFTER for each *TEST method* - returns summary accord.
-    private static OOPTestSummary runMethods(List<Class> classList,List<Method> testMethods,Object classInstance,Map<String, OOPResult> testMap,OOPExpectedException expected) throws IllegalAccessException, InstantiationException, InvocationTargetException {
+    private static OOPTestSummary runMethods(List<Class> classList,List<Method> testMethods,Object classInstance,Map<String, OOPResult> testMap) throws IllegalAccessException, InstantiationException, InvocationTargetException {
         List<Class> classRevList = new ArrayList<>(classList);
         Collections.reverse(classRevList); //from bottom to top! (for AFTER methods)
         Class afterClass = classRevList.get(0);
@@ -198,7 +200,10 @@ public class OOPUnitCore {
 
                 try {
                     //CALL THE TEST METHOD
+                    testMethod.setAccessible(true); //make sure the test is not private
                     testMethod.invoke(classInstance);
+                    //getting the expected exception variable
+                    OOPExpectedException expected = getExpected(classInstance.getClass(), classInstance);
 
                     //no exception was thrown ->
                     if (expected != null && expected.getExpectedException() != null) { // WE EXPECTED AN EXCEPTION BUT DIDN'T GET ANY
@@ -209,6 +214,8 @@ public class OOPUnitCore {
                 }
                 //exception *was* thrown ->
                 catch (InvocationTargetException e) {
+                    //getting the expected exception variable
+                    OOPExpectedException expected = getExpected(classInstance.getClass(), classInstance);
                     if (expected == null || (expected != null && expected.getExpectedException() == null)) { //WE DIDN'T EXPECT TO GET AN EXCEPTION BUT WE GOT ONE
                         if (e.getCause().getClass().equals(OOPAssertionFailure.class)) {
                             testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.FAILURE, e.getCause().getMessage()));
@@ -232,7 +239,7 @@ public class OOPUnitCore {
                 }
 
                 //reset expected value for the next test
-                initExpected(expected);
+                initExpected(classInstance);
 
                 // run all "AFTER METHODS" that are related to testMethod
                 runAfterMethos(testMethod,afterClass,testMap,classInstance,backupInstance);
@@ -269,9 +276,6 @@ public class OOPUnitCore {
             Constructor<?> constructor= testClass.getDeclaredConstructors()[0];
             constructor.setAccessible(true);
             Object finalObject = constructor.newInstance();
-
-            //getting the expected exception variable
-            OOPExpectedException expected = getExpected(testClass, finalObject);
             List<Method> testMethods = getTestMethods(testClass,tag);
             //list of classes inheritance
             List<Class> classList = getClassList(testClass);
@@ -281,7 +285,7 @@ public class OOPUnitCore {
             runSetupMethods(classList,finalObject);
 
             //RUN MAIN FUNCTION
-            return runMethods(classList,testMethods,finalObject,testMap,expected);
+            return runMethods(classList,testMethods,finalObject,testMap);
 
         } catch (Exception e) {
             //TODO what here?
