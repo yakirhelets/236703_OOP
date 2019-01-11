@@ -99,7 +99,7 @@ public class OOPUnitCore {
                 Field fieldFrom = original.getClass().getDeclaredField(field.getName());
                 fieldFrom.setAccessible(true);
                 Object value = fieldFrom.get(original); //getting the original field value
-                Object valueTo=null; //initialization
+                Object valueTo=new Object(); //initialization
                 if(value instanceof Cloneable) { //check if cloneable
                     valueTo = value.getClass().getMethod("clone").invoke(value);
                 } else if(getCopyCons(value) != null){ //check if has a copy cons
@@ -108,7 +108,7 @@ public class OOPUnitCore {
                     valueTo = copyCons.newInstance(value);
 
                 } else{ //basic copy
-                    valueTo = fieldFrom.get(original);
+                    valueTo = value;
                 }
                 //common behavior for all cases = just put the copied value in its new place
                 Field fieldTo = fieldsBackup.getClass().getDeclaredField(field.getName());
@@ -209,7 +209,7 @@ public class OOPUnitCore {
                 }
                 //exception *was* thrown ->
                 catch (InvocationTargetException e) {
-                    if (expected == null) { //WE DIDN'T EXPECT TO GET AN EXCEPTION BUT WE GOT ONE
+                    if (expected == null || (expected != null && expected.getExpectedException() == null)) { //WE DIDN'T EXPECT TO GET AN EXCEPTION BUT WE GOT ONE
                         if (e.getCause().getClass().equals(OOPAssertionFailure.class)) {
                             testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.FAILURE, e.getCause().getMessage()));
                         } else {

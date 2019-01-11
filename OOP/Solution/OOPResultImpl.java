@@ -37,8 +37,9 @@ public class OOPResultImpl implements OOPResult {
         if (obj.getClass() != OOPResultImpl.class) {
             return false;
         }
-        if (this.getMessage().equals(((OOPResultImpl)obj).getMessage())
-                && this.getResultType() == ((OOPResultImpl)obj).getResultType()) {
+        if (((this.getMessage() == null && ((OOPResultImpl)obj).getMessage() == null) //both are null
+                || this.getMessage().equals(((OOPResultImpl)obj).getMessage())) //or equal messages
+                && this.getResultType() == ((OOPResultImpl)obj).getResultType()) { //same result type
             return true;
         } else {
             return false;
