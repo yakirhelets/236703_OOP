@@ -271,7 +271,7 @@ public class OOPUnitCore {
             Object finalObject = constructor.newInstance();
 
             //getting the expected exception variable
-            final OOPExpectedException expected = getExpected(testClass, finalObject);
+            OOPExpectedException expected = getExpected(testClass, finalObject);
             List<Method> testMethods = getTestMethods(testClass,tag);
             //list of classes inheritance
             List<Class> classList = getClassList(testClass);
