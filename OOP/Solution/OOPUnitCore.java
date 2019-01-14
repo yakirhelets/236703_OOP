@@ -92,7 +92,7 @@ public class OOPUnitCore {
         ;
     }
 
-    private static void backupFields(Object original,Object fieldsBackup){
+    private static void backupFields(Object original,List<Object> backupFieldsList){
         Field[] fields = original.getClass().getDeclaredFields(); //get all test class fields
         for (Field field : fields) {
             try {
@@ -106,14 +106,11 @@ public class OOPUnitCore {
                     Constructor<?> copyCons = getCopyCons(value); //get the copy cons
                     copyCons.setAccessible(true);
                     valueTo = copyCons.newInstance(value);
-
-                } else{ //basic copy
+                } else{ //3th case: just a regular basic copy
                     valueTo = value;
                 }
-                //common behavior for all cases = just put the copied value in its new place
-                Field fieldTo = fieldsBackup.getClass().getDeclaredField(field.getName());
-                fieldTo.setAccessible(true);
-                fieldTo.set(fieldsBackup, valueTo);
+                //common behavior for all cases = just put the copied value in the list in its position
+                backupFieldsList.add(valueTo);
             } catch (Exception e) {
                 e.printStackTrace(); //TODO check here
             }
@@ -139,7 +136,7 @@ public class OOPUnitCore {
         }
     }
 
-    private static void runBeforeMethos(Method testMethod,Class beforeClass,Map<String, OOPResult> testMap,Object classInstance,Object backupInstance){
+    private static void runBeforeMethos(Method testMethod,Class beforeClass,Map<String, OOPResult> testMap,Object classInstance){
         List<Method> beforeClassMethods = Arrays.asList(beforeClass.getMethods());
         Collections.reverse(beforeClassMethods);
         beforeClassMethods.stream().filter(beforeMethod -> beforeMethod.isAnnotationPresent(OOPBefore.class) // beforeMethod contains the "OOPBefore" annotation
@@ -148,29 +145,44 @@ public class OOPUnitCore {
                 && ( beforeMethod.getDeclaringClass() != beforeClass || //BEFORE overriden
                 Arrays.stream(beforeClass.getDeclaredMethods()).anyMatch(func -> func.equals(beforeMethod)))
         ).forEach(beforeMethod -> {
-            backupAndInvoke(testMethod,beforeMethod,classInstance,backupInstance,testMap);
+            backupAndInvoke(testMethod,beforeMethod,classInstance,testMap);
         });
     }
 
-    private static void runAfterMethos(Method testMethod,Class afterClass,Map<String, OOPResult> testMap,Object classInstance,Object backupInstance) {
+    private static void runAfterMethos(Method testMethod,Class afterClass,Map<String, OOPResult> testMap,Object classInstance) {
         Arrays.stream(afterClass.getMethods()).filter(afterMethod -> afterMethod.isAnnotationPresent(OOPAfter.class) // beforeMethod contains the "OOPBefore" annotation
                 && Stream.of(afterMethod.getAnnotation(OOPAfter.class).value()).
                 anyMatch(methodName -> methodName.equals(testMethod.getName()))).
                 forEach(afterMethod -> {
-                    backupAndInvoke(testMethod,afterMethod,classInstance,backupInstance,testMap);
+                    backupAndInvoke(testMethod,afterMethod,classInstance,testMap);
                 });
     }
 
     //backup class field and invoke the given function, if we got an error -> restore the fields and put ERROR in the result map
-    private static void backupAndInvoke(Method testMethod,Method methodToInvoke,Object classInstance,Object backupInstance,Map<String, OOPResult> testMap){
+    private static void backupAndInvoke(Method testMethod,Method methodToInvoke,Object classInstance,Map<String, OOPResult> testMap){
+        List<Object> backedUpFields = new LinkedList<>();
         try {
             //backup fields
-            backupFields(classInstance, backupInstance);
+            backupFields(classInstance, backedUpFields);
             methodToInvoke.invoke(classInstance);
         } catch (Exception e) {
             //restore backed up fields
-            backupFields(backupInstance, classInstance);
+            restoreBackup(classInstance, backedUpFields);
             testMap.put(testMethod.getName(), new OOPResultImpl(OOPTestResult.ERROR, e.getClass().getName()));
+        }
+    }
+
+    private static void restoreBackup(Object classInstance, List<Object> fieldValuesList){
+        Field[] fields = classInstance.getClass().getDeclaredFields();
+        int counter=0;
+        for(Field field : fields){
+            try {
+                field.setAccessible(true);
+                field.set(classInstance,fieldValuesList.get(counter)); //restore the saved value from the backup to our object
+                counter++;
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -181,19 +193,13 @@ public class OOPUnitCore {
         List<Class> classRevList = new ArrayList<>(classList);
         Collections.reverse(classRevList); //from bottom to top! (for AFTER methods)
         Class afterClass = classRevList.get(0);
-
-        //another object for backup class fields
-        Constructor<?> constructor= classInstance.getClass().getDeclaredConstructors()[0];
-        constructor.setAccessible(true);
-        Object backupInstance = constructor.newInstance();
-        //Object backupInstance = classInstance.getClass().newInstance();
         Class beforeClass =classList.get(classList.size()-1);
 
         //for each TEST METHOD DO:
         testMethods.forEach(testMethod -> {
 
             // run all BEFORE methods
-            runBeforeMethos(testMethod,beforeClass,testMap,classInstance,backupInstance);
+            runBeforeMethos(testMethod,beforeClass,testMap,classInstance);
 
             //no error accrued during the BEFORE methods => continue
             if(!(testMap.get(testMethod.getName()) != null && testMap.get(testMethod.getName()).getResultType().equals(OOPTestResult.ERROR))) {
@@ -242,7 +248,7 @@ public class OOPUnitCore {
                 initExpected(classInstance);
 
                 // run all "AFTER METHODS" that are related to testMethod
-                runAfterMethos(testMethod,afterClass,testMap,classInstance,backupInstance);
+                runAfterMethos(testMethod,afterClass,testMap,classInstance);
 
             }
         });
@@ -271,10 +277,9 @@ public class OOPUnitCore {
 
         try {
             object = testClass;
-
             //making a class instance
             Constructor<?> constructor= testClass.getDeclaredConstructors()[0];
-            constructor.setAccessible(true);
+            constructor.setAccessible(true); //in case cons is private
             Object finalObject = constructor.newInstance();
             List<Method> testMethods = getTestMethods(testClass,tag);
             //list of classes inheritance
