@@ -5,17 +5,15 @@
 #ifndef INC_236703_HW5_UTILITIES_H
 #define INC_236703_HW5_UTILITIES_H
 
-template <typename T>
-class List {
+template<typename T, typename... TT>
+struct List {
     T head;
-    T next;
-    int size;
-public:
-    List(T head, T next, int size) : head(head), next(next), size(size) {}
+    List<TT...> next;
+    int size = sizeof... (TT);
 };
 
 template <typename T>
-class PrepentList {
+class PrependList {
     T type;
     List<T> list;
 };
@@ -32,11 +30,9 @@ class ListSet {
     List<T> list;
 };
 
-template <typename T>
-class Int {
-    int value;
-public:
-    Int(int value) : value(value) {}
+template <typename N>
+struct Int {
+    int value = N;
 };
 
 #endif //INC_236703_HW5_UTILITIES_H
