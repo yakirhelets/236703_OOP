@@ -14,8 +14,10 @@
 #include "part1/Utilities.h"
 
 int main() {
-    typedef List<Int<1>> types;
-    static_assert(types::head::val ==  1, "Not the answer!");
+    typedef List<Int<1>,Int<2>,Int<3>,Int<4>> types;
+    typedef typename ListSet<2, Int<7>, types>::list listA;
+    static_assert(types::next::next::head::value ==  3, "Not the answer!");
+    static_assert(listA::next::next::head::value ==  7, "Not the answer!");
     //static_assert( typeid(types::head) == typeid(Int<1>));
 
     // part1Main();
