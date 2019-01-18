@@ -79,11 +79,11 @@ struct ListSet<0,S,List<>>{
 
 //--------------------------Int<N>------------------------------------
 
-template <int>
+template<int>
 struct Int;
 
-template <int N>
-struct Int {
+template<int N>
+struct Int{
     constexpr static int value = N;
 };
 
