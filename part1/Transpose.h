@@ -1,7 +1,6 @@
 #ifndef PART2_TRANSPOSE_H
 #define PART2_TRANSPOSE_H
 
-#include <ntsecpkg.h>
 #include "Utilities.h"
 
 template<typename L>

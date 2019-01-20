@@ -7,8 +7,8 @@
 
 void part1Main() {
     UtilitiesTest();
-    MatrixOperationsTest();
-    Part1Examples();
+    //MatrixOperationsTest();
+    //Part1Examples();
 }
 
 #endif //OOP5_PART1MAIN_H
