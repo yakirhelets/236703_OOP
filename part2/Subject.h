@@ -12,34 +12,35 @@ class Subject{
 public:
     Subject(); //default cons
     void notify(const T& msg){
-        for (int i = 0; i < obs.size(); i++)
-        obs[i]<T>->handleEvent(msg);
+        for(auto ob : obs){
+            ob->handleEvent(msg);
+        }
     }
     void addObserver(Observer<T>& ob){
         if(obs.find(ob) != set<class Observer<T>*>::end){
             obs.insert(ob);
         }else{
-            throw ObserverAlreadyKnownToSubject;
+            throw ObserverAlreadyKnownToSubject();
         }
     };
     void removeObserver(Observer<T>& ob){
-        if(obs.find(ob) == set::end){
-            throw ObserverUnknownToSubject;
+        if(obs.find(ob) == set<class Observer<T>*>::end){
+            throw ObserverUnknownToSubject();
         }else{
             obs.erase(ob);
         }
     };
     Subject<T>& operator+=(Observer<T>& ob){
         this.addObserver(ob);
-        return this;
+        return *this;
     };
     Subject<T>& operator-=(Observer<T>& ob){
         this.removeObserver(ob);
-        return this;
+        return *this;
     };
     Subject<T>& operator()(const T& t){
         this.notify(t);
-        return this;
+        return *this;
     };
 };
 
