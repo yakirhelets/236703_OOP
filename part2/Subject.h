@@ -1,13 +1,14 @@
 #ifndef SUBJECT_H
 #define SUBJECT_H
 
-#include <set>
+#include <vector>
+#include <algorithm>
 #include "Observer.h"
 #include "OOP5EventException.h"
 
 template<typename T>
 class Subject{
-    std::set<Observer<T>*> obs;
+    std::vector<Observer<T>*> obs;
 public:
     void notify(const T& msg){
         for(auto ob : obs){
@@ -15,17 +16,17 @@ public:
         }
     }
     void addObserver(Observer<T>& ob){
-        if(obs.find(&ob) != obs.end()){
-            obs.insert(&ob);
+        if ( std::find(obs.begin(), obs.end(), &ob) == obs.end() ){
+            obs.push_back(&ob);
         }else{
             throw ObserverAlreadyKnownToSubject();
         }
     };
     void removeObserver(Observer<T>& ob){
-        if(obs.find(&ob) == obs.end()){
+        if ( std::find(obs.begin(), obs.end(), &ob) == obs.end() ){
             throw ObserverUnknownToSubject();
         }else{
-            obs.erase(&ob);
+            obs.erase(std::remove(obs.begin(), obs.end(), &ob), obs.end());
         }
     };
     Subject<T>& operator+=(Observer<T>& ob){

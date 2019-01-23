@@ -28,9 +28,9 @@ int main() {
     get_set_matrix_test();
     matrix_test();
     
-    // //Part Two
-    observer_test();
-    subject_test();
+    //Part Two
+    //observer_test();
+    //subject_test();
     
     return 0;
 }
