@@ -3,6 +3,6 @@
 #include "my/MyTest.h"
 
 void part2Main() {
-    //MyTest().test();
+    MyTest().test();
     Part2Examples().mainPart2Examples();
 }

@@ -21,7 +21,7 @@ int main() {
     // //static_assert( typeid(types::head) == typeid(Int<1>));
 
     part1Main();
-    //part2Main();
+    part2Main();
     
     //SERG Tests
     utility_test();
@@ -29,8 +29,8 @@ int main() {
     matrix_test();
     
     //Part Two
-    //observer_test();
-    //subject_test();
+    observer_test();
+    subject_test();
     
     return 0;
 }
